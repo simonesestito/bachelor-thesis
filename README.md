@@ -10,6 +10,8 @@
 <img src="https://gyala.com/wp-content/uploads/2021/11/Logo_GYALA-2048x455.png" width="170" style="background-color: #303030; max-height: 60px; ">
 </div>
 
+---
+
 <a href="https://simonesestito.github.io/THESIS-REPO-TITLE/">
     <img src=".github/assets/thesis-button.svg" alt="Download Thesis">
 </a>
