@@ -1,0 +1,67 @@
+% !TeX spellcheck = it_IT
+
+\documentclass[Lau, italian]{sapthesis}
+
+\graphicspath{assets/}
+
+\usepackage{microtype}
+\usepackage[italian]{babel}
+\usepackage[utf8]{inputenx}
+\usepackage{wrapfig}
+\usepackage{cprotect}
+\usepackage{listings}
+\usepackage{float}
+\usepackage[notextcomp]{kpfonts}
+\usepackage{curve2e}
+
+\renewcommand{\lstlistingname}{Snippet} % Listing -> Snippet
+
+\usepackage{hyperref}
+\hypersetup
+{
+	pdftitle={TITOLO},
+	pdfauthor={Simone Sestito}
+}
+
+\title{TITOLO}
+\author{Simone Sestito}
+\IDnumber{1937764}
+\course{Informatica}
+\courseorganizer{Facoltà di Ingegneria dell'informazione, informatica e statistica}
+\AcademicYear{2022/2023}
+\copyyear{2023}
+\advisor{Prof. Emiliano Casalicchio}
+\coadvisor{Dott. BBBBBBBB}
+\authoremail{sestito.1937764@studenti.uniroma1.it}
+\examdate{17 Ottobre 2023}
+\examiner{Prof. AAAA}
+\examiner{Prof. AAAA}
+\examiner{Prof. AAAA}
+\examiner{Prof. AAAA}
+\examiner{Prof. AAAA}
+\examiner{Prof. AAAA}
+\versiondate{\today}
+
+\begin{document}
+
+\frontmatter
+
+\maketitle
+
+\input{chapters/abstract}
+
+\tableofcontents
+
+\mainmatter
+
+\include{chapters/introduction}
+
+\backmatter
+
+\cleardoublepage
+\phantomsection
+\addcontentsline{toc}{chapter}{\bibname}
+\bibliographystyle{sapthesis}
+\bibliography{references}
+
+\end{document}
