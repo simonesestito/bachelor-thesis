@@ -5,20 +5,41 @@
 \subsection{ELF}
 
 \subsection{PE}
-
-\subsection{Tipi di exe packed e altri}
+Potrebbero essere offuscati, come vedremo più avanti
 
 \section{IoC: Indicator of Compromise}
 
-\section{Capa}
+\section{Capa: capabilities}
 Includere anche il test su Colab con le statistiche
 
-\section{Yara rules}
-Sia per statici che in memoria dei processi 
+\section{Yara: signature-based}
+Sia per statici che in memoria dei processi.
 
-\section{Havoc framework}
+Ora però usate solo per analizzare staticamente un file eseguibile.
+
+\section{Altri strumenti}
+\subsection{VirusTotal}
+\subsection{ExifTool}
+
+\section{File offuscati}
+Packed, installer, ... come li trattiamo?
+
+\section{Havoc framework e DLL Injection in memoria}
 Non sempre però questa tecnica è sufficiente. Infatti, analizziamo un caso specifico: \emph{Havoc Framework}.
 
-https://embee-research.ghost.io/havoc-c2-static-detection-via-ntdll-api-hashes/
+\url{https://embee-research.ghost.io/havoc-c2-static-detection-via-ntdll-api-hashes/}
+
+\url{https://www.ired.team/offensive-security/code-injection-process-injection/dll-injection}
 
 Con questo famoso strumento di Command-and-Control è possibile andare a creare un proprio eseguibile Windows con dimensioni ridotte, in grado di svolgere Code Injection all'interno di altri eseguibili standard di Windows, come \texttt{notepad.exe} o \texttt{calc.exe}, caricando una libreria DLL che si occuperà del resto. In questo modo, nell'elenco dei processi è visibile l'applicativo Windows in questione e non il nostro programma, che magari dopo l'avvio aveva insospettito l'utente più attento - ma privo di strumenti più sofisticati come gli agent.
+
+\section{Automazione su AWS}
+\subsection{Scrittura dei parser}
+\subsection{Analisi di file non standard (packed, installer, etc.)}
+\subsection{Creazione dell'immagine}
+Prima era enorme (naive approach), poi ridotta sfruttando il multistage
+\subsection{Esecuzione}
+\subsection{Deploy su AWS}
+Immagine dell'architettura (SVG)
+
+Sicurezza e varie policy
