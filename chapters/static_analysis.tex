@@ -24,6 +24,25 @@ Ora però usate solo per analizzare staticamente un file eseguibile.
 \section{File offuscati}
 Packed, installer, ... come li trattiamo?
 
+Analisi rimandata alla parte dinamica, perché lì possiamo sfruttare altri strumenti di analisi di metadata integrati in Multiscanner, più potenti di quello che potremmo fare manualmente qui.
+
+Ci basta avere i dati di ciò che stiamo trattando, ad esempio l'output in questo caso sarà del tipo:
+\begin{code}
+\captionof{listing}{Output CAPA su file packed}
+\label{code:json_capa_packed}
+\begin{minted}{json}
+{
+    "capa": {
+        "format": "packed",
+        "arch": "i386",
+        "os": "windows"
+    }
+}
+\end{minted}
+\end{code}
+
+Nessuna regola viene eseguita, perché \texttt{capa} non supporta questi formati per l'estrazione delle capabilities usando i propri strumenti integrati. \ref{code:json_capa_packed}
+
 \section{Havoc framework e DLL Injection in memoria}
 Non sempre però questa tecnica è sufficiente. Infatti, analizziamo un caso specifico: \emph{Havoc Framework}.
 

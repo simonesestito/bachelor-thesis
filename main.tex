@@ -7,14 +7,13 @@
 \usepackage{microtype}
 \usepackage[italian]{babel}
 \usepackage[utf8]{inputenx}
+\usepackage[T1]{fontenc}
 \usepackage{wrapfig}
 \usepackage{cprotect}
-\usepackage{listings}
+\usepackage{minted}
+\usepackage{inconsolata}
 \usepackage{float}
-\usepackage[notextcomp]{kpfonts}
 \usepackage{curve2e}
-
-\renewcommand{\lstlistingname}{Snippet} % Listing -> Snippet
 
 \usepackage{hyperref}
 \hypersetup
@@ -22,6 +21,8 @@
 	pdftitle={TITOLO},
 	pdfauthor={Simone Sestito}
 }
+
+\newenvironment{code}{\captionsetup{type=listing}}{}
 
 \title{Analisi automatica statica e dinamica di malware in cloud AWS}
 \author{Simone Sestito}
