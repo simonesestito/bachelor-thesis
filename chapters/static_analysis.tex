@@ -17,9 +17,6 @@ Sia per statici che in memoria dei processi.
 
 Ora però usate solo per analizzare staticamente un file eseguibile.
 
-\section{Riconoscitore del tipo di file}
-Fatto custom in C
-
 \section{File offuscati}
 Packed, installer, ... come li trattiamo?
 
@@ -41,6 +38,24 @@ Ci basta avere i dati di ciò che stiamo trattando, ad esempio l'output in quest
 \end{code}
 
 Nessuna regola viene eseguita, perché \texttt{capa} non supporta questi formati per l'estrazione delle capabilities usando i propri strumenti integrati. \ref{code:json_capa_packed}
+
+\section{Riconoscitore custom del tipo di file}
+Partendo dalla necessità di velocizzare l'operazione di riconoscimento del file, in sostituzione dell'esecuzione del comando \texttt{capa -r anti-analysis} che può portare a richiedere diversi minuti a seconda del numero di funzioni presenti nel file, come visto in \textbf{FIGURA REF},
+dobbiamo ricorrere a una diversa soluzione.
+
+Dato che si tratta di un problema di enumerazione, non aveva senso andare a creare e mantenere un proprio riconoscitore di ogni possibile formato di un file. Ad esempio, già solo per quanto riguarda i file pacchettizzati, esistono tantissimi packer e tanti ne esisteranno in futuro.
+
+Inoltre, spesso malware usano packer personalizzati, che hanno leggere differenze da quelli noti e si correrebbe il rischio di creare uno strumento poco efficace.
+Per questi e altri motivi quali il tempo a disposizione, è stato scelto di usare come base uno strumento noto (\texttt{Detect-It-Easy}) per fare una prima analisi, affiancato da uno script Python custom che decide quali operazioni svolgere a seconda del tipo di file, va a fare il parsing del JSON dato in output e si integra nello script Bash creando un layer di astrazione col resto del workflow.
+Infatti, nel caso servisse modificare lo strumento sottostante, sarebbe sufficiente adattare la traduzione dall'output specifico del tool al contratto stabilito col resto del programma per rendere seamless questa variazione, anche sostanziale.
+
+Tuttavia, a fini di comprensione pratica del funzionamento dietro questo genere di detector, è stato creato un Proof of Concept, scritto in C, in grado di rilevare solo alcuni dei tipi dei più famosi packer, come UPX, nei file ELF (Linux).
+Sono state usate caratteristiche note di questi packer
+\footnote{\url{https://github.com/mandiant/capa-rules/tree/e88db21de4d4cf9f7abec9177fab11240075036b/anti-analysis/packer}}
+per eseguire la detection.
+
+\section{FLARE Floss}
+Teoria: \url{https://github.com/mandiant/flare-floss/blob/master/doc/theory.md}
 
 \section{Automazione su AWS}
 \subsection{Scrittura dei parser}
