@@ -6,8 +6,8 @@
 </a>
 
 <div style="display: flex; align-items: center;">
-<img src="https://www.uniroma1.it/sites/default/files/images/logo/sapienza-big.png" height="60" style="background-color: #d2d2d2; margin-right: 16px;">
-<img src="https://gyala.com/wp-content/uploads/2021/11/Logo_GYALA-2048x455.png" width="170" style="background-color: #303030; max-height: 60px; ">
+<img src=".github/assets/sapienza.png" height="60" style="background-color: #d2d2d2; margin-right: 16px;">
+<img src=".github/assets/gyala.svg" width="170" style="background-color: #303030; max-height: 60px; ">
 </div>
 
 ---
