@@ -196,14 +196,27 @@ Parser per capa e yara.
 
 Parser dal file testuale, con schemini.
 
+\subsection{Architettura serverless}
+Upload su S3, poi risultato nel db.
+
+Per ogni componente: (sicurezza, modularità e costi)
 
 \subsection{Creazione dell'immagine}
-Prima era enorme (naive approach), poi ridotta sfruttando il multistage
+Prima era enorme (naive approach), poi ridotta sfruttando il multistage.
 
-\subsection{Workflow di analisi statica}
-Upload su S3, poi risultato nel db
+Uso di CMD/ENTRYPOINT così da rendere l'immagine usabile sempre, che sia da URL o da cartella su cui itera.
 
-\subsection{Deploy su AWS}
-Immagine dell'architettura (SVG)
 
+Serve eseguirla su Lambda = serve rispettare la Runtime Interface!
+
+
+\subsection{Deploy e hardening}
 Sicurezza e varie policy (hardening)
+
+\subsection{Limiti delle Lambda}
+
+CPU time e memoria. Gestione degli errori (status 137 OOM).
+
+\
+
+6MB / 256KB in base a sync/async invocation.
