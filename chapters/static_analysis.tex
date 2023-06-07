@@ -217,6 +217,32 @@ Sicurezza e varie policy (hardening)
 
 CPU time e memoria. Gestione degli errori (status 137 OOM).
 
-\
-
 6MB / 256KB in base a sync/async invocation.
+
+\section{Versioning}
+Per il versioning, è stato creato un repository Git sul server GitLab aziendale.
+
+Per ogni modifica viene creato un commit, come è standard.
+
+Tuttavia, ci sono alcuni aspetti dell'organizzazione che ha senso sottolineare.
+
+\subsection{Branch Naming Convention}
+Per la gestione del repository,e in particolare i suoi branch, si seguono rigidamente queste convenzioni:
+\begin{itemize}
+    \item \texttt{main} è il branch principale dove deve essere presente solo codice finito e considerabile stabile a tutti gli effetti;
+    \item \texttt{develop} è dove si tiene il codice che si considera usabile ma non ancora sufficientemente testato o pronto all'uso in produzioni così com'è - su questo branch infine è dove viene fatto il merge dei successivi branch più specifici;
+    \item \texttt{feature/<feat-name>} è l'insieme di tutti i branch, originati da \emph{develop}, dove si lavora all'implementazione di una specifica funzione - ciò permette di mantenere il branch \emph{develop} funzionante, privo di funzioni non completamente realizzate, e diminuisce le interferenze tra chi sta lavorando sulla stessa codebase ma su funzioni distinte tra loro - e il prefisso \textbf{feature/} identifica chiaramente che si tratta di un branch dove si lavora solo ed esclusivamente su una sola funzionalità;
+    \item \texttt{refactor/<ref-name>} invece rappresenta l'insieme dei branch dove si fa, con diversi gradi di complessità, refactoring del codice - ad esempio, nel progetto è stato realizzato un branch di refactoring per passare dall'uso di \texttt{os.path} al modulo Python \texttt{pathlib} per una maggiore usabilità
+\end{itemize}
+
+Infine, per un maggiore controllo, il merge dai branch secondari (\texttt{feature/} e \texttt{refactor}) vengono fatti attraverso l'uso di \emph{Merge Request} (o \emph{Pull Request}, a seconda che si usa la nomenclatura di GitLab o di GitHub).
+In questo modo, è possibile interagire sul merge commentando o richiedendo revisioni di co-workers.
+
+Non siamo ancora giunti al punto di rilasciare il progetto e attribuirgli una versione, ma in tal caso è ideale usare convenzioni standard come \emph{Semantic Versioning}, e usare tale stringa come \textbf{tag} sul repository Git.
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=\textwidth]{assets/git_branches_diagram.png}
+    \caption{Struttura dei branch Git}
+    \label{fig:git_branches_diagram}
+\end{figure}
