@@ -49,14 +49,19 @@ Inoltre, spesso malware usano packer personalizzati, che hanno leggere differenz
 Per questi e altri motivi quali il tempo a disposizione, è stato scelto di usare come base uno strumento noto (\texttt{Detect-It-Easy}) per fare una prima analisi, affiancato da uno script Python custom che decide quali operazioni svolgere a seconda del tipo di file, va a fare il parsing del JSON dato in output e si integra nello script Bash creando un layer di astrazione col resto del workflow.
 Infatti, nel caso servisse modificare lo strumento sottostante, sarebbe sufficiente adattare la traduzione dall'output specifico del tool al contratto stabilito col resto del programma per rendere seamless questa variazione, anche sostanziale.
 
-Tuttavia, a fini di comprensione pratica del funzionamento dietro questo genere di detector, è stato creato un Proof of Concept, scritto in Python, in grado di rilevare solo alcuni dei tipi dei più famosi packer come UPX, o se si tratta di un installer Inno-Setup, nei file PE x86\_64 (Windows).
-Sono state usate caratteristiche note di questi packer
-\footnote{\url{https://github.com/mandiant/capa-rules/tree/e88db21de4d4cf9f7abec9177fab11240075036b/anti-analysis/packer}}
-per eseguire la detection, sfruttando la libreria pefile per non eseguire l'intero parsing a mano dei byte degli header e non essere dipendenti da implementazioni native dell'OS come con l'uso dell'header \texttt{windows.h} in un programma C.
+Tuttavia, ci sono alcuni tipi che anche Detect-It-Easy fallisce a riconoscere, portando poi a un crash di capa quando eseguito.
+Per questo motivo è stato creato un \textbf{custom detector}, scritto in Python, che implementa in maniera molto più efficiente e diretta, le sole regole di capa che riconoscono i file specifici su cui non è in grado di lavorare.
 
-\begin{figure}[h!]
+Di seguito possiamo osservare come funziona per dei tipi famosi di questi strumenti, ovvero il packer UPX e l'installer InnoSetup.
+Sono state usate caratteristiche e regole note
+\footnote{\url{https://github.com/mandiant/capa-rules/tree/e88db21de4d4cf9f7abec9177fab11240075036b/anti-analysis/packer}}
+per eseguire la detection.
+
+La lettura degli header del file PE sfrutta la libreria pefile per non eseguire l'intero parsing a mano dei byte degli header e non essere dipendenti da implementazioni native dell'OS come con l'uso dell'header \texttt{<windows.h>} in un programma C.
+
+\begin{figure}[ht]
     \centering
-    \includegraphics[scale=0.34]{assets/custom_file_detector_output.png}
+    \includegraphics[width=\textwidth]{assets/custom_file_detector_output.png}
     \caption{Custom file detector output}
 \end{figure}
 
@@ -137,6 +142,50 @@ def is_innosetup(file_path):
     
     return match_setup and match_messages
 \end{minted}
+
+\subsection{Design scalabile e modulare}
+Si nota immediatamente come una tale implementazione è poco scalabile e presenta numerose ridondanze da rimuovere.
+
+Studiando le regole di interesse all'interno del repository GitHub \textit{capa-rules}, osserviamo come le regole siano principalmente di due categorie: basate su match di stringhe o basate su match di nomi di sezioni nel file eseguibile.
+
+Da questa osservazione, elaboriamo la struttura del programma software di detection. Precisamente, decidiamo di strutturarlo in classi dove ogni regola è una classe a sé, e individuiamo le seguenti classi padre (figura \ref{fig:base_custom_static_analyzer_uml}):
+\begin{itemize}
+    \item \texttt{BaseRule} conterrà le logiche di base che possiede una regola, tra cui un getter per il nome e un metodo \texttt{match()}
+    \item \texttt{StringRule} conterrà il codice unico per tutte le regole che basano il loro match sulla presenza di determinate stringhe all'interno del file, quindi la classe figlia dovrà solo fornire le stringhe da cercare e la logica di match (ad esempio: tutte le stringhe richieste devono essere state trovate = and logico; una sola stringa trovata è sufficiente = or logico)
+    \item \texttt{SectionRule} analogamente a prima conterrà le procedure di estrazione delle sezioni dal file, con la logica di match nelle classi figlie, ossia le effettive regole.
+\end{itemize}
+
+Sempre al fine di ottimizzare i tempi di esecuzione di questo rilevamento statico sul file eseguibile,
+andiamo a creare una classe wrapper sopra \texttt{pathlib.Path} che esporrà i metodi per leggere le sezioni, procedura lenta se ripetuta per ogni singola regola, e alcune altre funzioni di utilità come la rilevazione del tipo basilare di file (PE o ELF) eseguibile tramite l'ausilio di \texttt{libmagic}, la stessa che permette al comando \texttt{file} di operare.
+Quindi da un lato è stata aumentata l'astrazione tra la business logic del programma e i dettagli implementativi delle librerie sottostanti, dall'altro possiamo aggiungere meccanismi di lazy-loading e caching di tali informazioni richieste.
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width = 0.8\textwidth]{assets/base_custom_static_analyzer.png}
+    \caption{Diagramma UML delle classi}
+    \label{fig:base_custom_static_analyzer_uml}
+\end{figure}
+
+\begin{figure}[h!]
+    \centering
+    \begin{minted}{python}
+class InnoSetupDetector(StringsRule):
+    def name(self) -> str:
+        return 'executable/installer/inno-setup'
+
+    def get_strings(self) -> list[bytes]:
+        return [
+            b'Inno Setup Setup Data (',
+            b'Inno Setup Messages (',
+        ]
+
+    def match(self, file: AnalysisFile) -> bool:
+        # && logic
+        return len(self.extract_strings(file)) == len(self.strings)
+    \end{minted}
+    \caption{Regola di riconoscimento di InnoSetup, usando la nuova architettura}
+    \label{fig:enter-label}
+\end{figure}
 
 \section{FLARE Floss}
 Teoria: \url{https://github.com/mandiant/flare-floss/blob/master/doc/theory.md}
