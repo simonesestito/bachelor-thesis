@@ -159,14 +159,14 @@ Sempre al fine di ottimizzare i tempi di esecuzione di questo rilevamento static
 andiamo a creare una classe wrapper sopra \texttt{pathlib.Path} che esporrà i metodi per leggere le sezioni, procedura lenta se ripetuta per ogni singola regola, e alcune altre funzioni di utilità come la rilevazione del tipo basilare di file (PE o ELF) eseguibile tramite l'ausilio di \texttt{libmagic}, la stessa che permette al comando \texttt{file} di operare.
 Quindi da un lato è stata aumentata l'astrazione tra la business logic del programma e i dettagli implementativi delle librerie sottostanti, dall'altro possiamo aggiungere meccanismi di lazy-loading e caching di tali informazioni richieste.
 
-\begin{figure}[h!]
+\begin{figure}[H]
     \centering
     \includegraphics[width = 0.8\textwidth]{assets/base_custom_static_analyzer.png}
     \caption{Diagramma UML delle classi}
     \label{fig:base_custom_static_analyzer_uml}
 \end{figure}
 
-\begin{figure}[h!]
+\begin{figure}[H]
     \centering
     \begin{minted}{python}
 class InnoSetupDetector(StringsRule):
@@ -217,9 +217,7 @@ Sicurezza e varie policy (hardening)
 
 CPU time e memoria. Gestione degli errori (status 137 OOM).
 
-6MB / 256KB in base a sync/async invocation.
-
-\begin{figure}
+\begin{figure}[H]
      \begin{subfigure}[b]{0.5\textwidth}
          \centering
          \includegraphics[width=\textwidth]{assets/static_analysis_exec_cpu_time.png}
@@ -234,6 +232,15 @@ CPU time e memoria. Gestione degli errori (status 137 OOM).
      \end{subfigure}
      \label{fig_static_analysis_exec_stats}
      \caption{Uso delle risorse eseguendo analisi statica su malware reali presi a campione}
+\end{figure}
+
+6MB / 256KB in base a sync/async invocation.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.6\textwidth]{assets/static_analysis_results_size.png}
+    \caption{Dimensione del file di output originale e post-compressione gzip + base64}
+    \label{fig:static_analysis_results_size}
 \end{figure}
 
 \section{Versioning}
