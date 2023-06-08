@@ -243,6 +243,34 @@ CPU time e memoria. Gestione degli errori (status 137 OOM).
     \label{fig:static_analysis_results_size}
 \end{figure}
 
+\subsection{Costi del servizio}
+Le prossime analisi si baseranno sui seguenti parametri di riferimento forniti sulla base dello storico aziendale e delle aspettative di uso reale del servizio:
+\begin{table}[H]
+    \centering
+    \begin{tabular}{|l|l|}
+        \hline
+        \textbf{Parametro}             & \textbf{Valore (al mese)}       \\ \hline
+        Numero di sample da analizzare & 1.000.000                       \\
+        Memoria media richiesta        & 512 MB (limite massimo: 1024MB) \\
+        Tempi medio di esecuzione      & 90 secondi                      \\ \hline
+    \end{tabular}
+\end{table}
+
+Inoltre, si sottolinea come i costi dei servizi AWS subiscano inflessioni nel tempo, per cui questa stima è sufficientemente valida al momento della scrittura di questo documento.
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{|l|l|}
+        \hline
+        \textbf{Servizio}         & \textbf{Costo stimato (al mese)} \\ \hline
+        S3 Bucket (standard tier) &                                  \\
+        Lambda start              &                                  \\
+        Lambda di analisi         &                                  \\
+        Lambda di fine rapporto   &                                  \\ \hline
+        Costo stimato totale      & € 750,00                         \\ \hline
+    \end{tabular}
+\end{table}
+
 \section{Versioning}
 Per il versioning, è stato creato un repository Git sul server GitLab aziendale.
 
