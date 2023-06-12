@@ -1,0 +1,96 @@
+<mxfile host="app.diagrams.net" modified="2023-06-12T14:46:39.591Z" agent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36" etag="qsm2ceBQwPNfG9-LSNtC" version="21.3.8" type="device">
+  <diagram name="Pagina-1" id="Hks44R-TckUBL0Fw1PNA">
+    <mxGraphModel dx="717" dy="418" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="rgsa8mZJjS7UXX8SLwmR-3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;curved=1;entryPerimeter=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;" parent="1" source="rgsa8mZJjS7UXX8SLwmR-28" target="rgsa8mZJjS7UXX8SLwmR-27" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="339" y="30" as="sourcePoint" />
+            <mxPoint x="234" y="130" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="rgsa8mZJjS7UXX8SLwmR-4" value="Upload via AWS API" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" parent="rgsa8mZJjS7UXX8SLwmR-3" vertex="1" connectable="0">
+          <mxGeometry x="-0.3107" y="-15" relative="1" as="geometry">
+            <mxPoint x="44" y="13" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="rgsa8mZJjS7UXX8SLwmR-8" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;exitPerimeter=0;" parent="1" source="rgsa8mZJjS7UXX8SLwmR-27" target="rgsa8mZJjS7UXX8SLwmR-6" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="234" y="344.9999999999999" as="sourcePoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="rgsa8mZJjS7UXX8SLwmR-9" value="PUT / POST Event&lt;br&gt;&lt;br&gt;&lt;font style=&quot;font-size: 10px;&quot; data-font-src=&quot;https://fonts.googleapis.com/css?family=ubuntu-mono&quot; face=&quot;monospace&quot;&gt;Records[].s3.object.key&lt;/font&gt;" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" parent="rgsa8mZJjS7UXX8SLwmR-8" vertex="1" connectable="0">
+          <mxGeometry x="-0.1402" y="2" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="rgsa8mZJjS7UXX8SLwmR-5" value="Private Bucket, with default encryption" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
+          <mxGeometry x="339" y="155" width="230" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="rgsa8mZJjS7UXX8SLwmR-19" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" parent="1" source="rgsa8mZJjS7UXX8SLwmR-6" target="rgsa8mZJjS7UXX8SLwmR-18" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="rgsa8mZJjS7UXX8SLwmR-21" value="Invoke Lambda (async)&lt;br&gt;&lt;br style=&quot;font-size: 10px;&quot;&gt;&lt;font size=&quot;1&quot; face=&quot;monospace&quot;&gt;{ sample_url (presigned GET),&lt;br&gt;analysis_id (UUIDv4) }&lt;/font&gt;" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];labelBackgroundColor=default;" parent="rgsa8mZJjS7UXX8SLwmR-19" vertex="1" connectable="0">
+          <mxGeometry x="-0.146" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="rgsa8mZJjS7UXX8SLwmR-32" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=0.132;entryY=0.021;entryDx=0;entryDy=0;entryPerimeter=0;curved=1;" parent="1" source="rgsa8mZJjS7UXX8SLwmR-6" target="rgsa8mZJjS7UXX8SLwmR-29" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="rgsa8mZJjS7UXX8SLwmR-33" value="Create new task&lt;br&gt;using the UUID" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" parent="rgsa8mZJjS7UXX8SLwmR-32" vertex="1" connectable="0">
+          <mxGeometry x="-0.8801" y="26" relative="1" as="geometry">
+            <mxPoint x="-36" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="rgsa8mZJjS7UXX8SLwmR-6" value="Lambda (Python3.9)&lt;br&gt;&lt;font face=&quot;monospace&quot; data-font-src=&quot;https://fonts.googleapis.com/css?family=ubuntu-mono&quot; style=&quot;font-size: 10px;&quot;&gt;trigger_new_malware&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="159" y="305" width="150" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="rgsa8mZJjS7UXX8SLwmR-17" value="Policy &lt;i&gt;start_lambda_policy.json&lt;/i&gt;&lt;br&gt;&lt;ul&gt;&lt;li&gt;Allow CloudWatch logs&lt;/li&gt;&lt;li&gt;Allow s3:GetObject on prev. bucket&lt;/li&gt;&lt;li&gt;Allow invoke only next Lambda&lt;/li&gt;&lt;li&gt;Write task on results DB / service&lt;/li&gt;&lt;/ul&gt;&lt;div&gt;Create analysis UUID to aggregate workflow outputs&lt;/div&gt;" style="text;html=1;align=left;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" parent="1" vertex="1">
+          <mxGeometry x="339" y="275" width="300" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="rgsa8mZJjS7UXX8SLwmR-23" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" parent="1" source="rgsa8mZJjS7UXX8SLwmR-18" target="rgsa8mZJjS7UXX8SLwmR-22" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="rgsa8mZJjS7UXX8SLwmR-24" value="Invoke Lambda (sync, payload max 6MB)&lt;br&gt;&lt;br&gt;&lt;font style=&quot;font-size: 10px;&quot; data-font-src=&quot;https://fonts.googleapis.com/css?family=ubuntu-mono&quot; face=&quot;monospace&quot;&gt;{ id (analysis UUID),&lt;br&gt;s (Base64 of gzipped JSON analysis result) }&lt;/font&gt;" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" parent="rgsa8mZJjS7UXX8SLwmR-23" vertex="1" connectable="0">
+          <mxGeometry x="-0.2149" y="1" relative="1" as="geometry">
+            <mxPoint y="7" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="rgsa8mZJjS7UXX8SLwmR-18" value="Lambda (Docker image)&lt;br&gt;&lt;font face=&quot;monospace&quot; data-font-src=&quot;https://fonts.googleapis.com/css?family=ubuntu-mono&quot; style=&quot;font-size: 10px;&quot;&gt;static_analysis_malware_tools&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;labelBorderColor=none;strokeColor=#FF0000;" parent="1" vertex="1">
+          <mxGeometry x="129" y="485" width="210" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="rgsa8mZJjS7UXX8SLwmR-20" value="Policy &lt;i&gt;analysis_lambda_policy.json&lt;/i&gt;&lt;br&gt;&lt;ul&gt;&lt;li&gt;Allow CloudWatch logs&lt;/li&gt;&lt;li&gt;&lt;span style=&quot;background-color: initial;&quot;&gt;Allow invoke only next Lambda&lt;/span&gt;&lt;br&gt;&lt;/li&gt;&lt;li&gt;(deny S3 bucket access)&lt;/li&gt;&lt;li&gt;(deny results DB/service access)&lt;/li&gt;&lt;/ul&gt;" style="text;html=1;align=left;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" parent="1" vertex="1">
+          <mxGeometry x="348" y="460" width="240" height="110" as="geometry" />
+        </mxCell>
+        <mxCell id="rgsa8mZJjS7UXX8SLwmR-30" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;curved=1;" parent="1" source="rgsa8mZJjS7UXX8SLwmR-22" target="rgsa8mZJjS7UXX8SLwmR-29" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="rgsa8mZJjS7UXX8SLwmR-31" value="Send Results&lt;br&gt;for the task&lt;br&gt;identified by UUID" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" parent="rgsa8mZJjS7UXX8SLwmR-30" vertex="1" connectable="0">
+          <mxGeometry x="-0.23" y="-6" relative="1" as="geometry">
+            <mxPoint x="-8" y="-25" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="rgsa8mZJjS7UXX8SLwmR-22" value="Lambda (Python3.9)&lt;br&gt;&lt;font style=&quot;font-size: 10px;&quot; data-font-src=&quot;https://fonts.googleapis.com/css?family=ubuntu-mono&quot; face=&quot;monospace&quot;&gt;static_analysis_reporting&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="141.5" y="665" width="185" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="rgsa8mZJjS7UXX8SLwmR-25" value="Policy reporting&lt;i&gt;_lambda_policy.json&lt;/i&gt;&lt;br&gt;&lt;ul&gt;&lt;li&gt;Allow CloudWatch logs&lt;br&gt;&lt;/li&gt;&lt;li&gt;Access results DB/service&lt;/li&gt;&lt;/ul&gt;" style="text;html=1;align=left;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" parent="1" vertex="1">
+          <mxGeometry x="349" y="655" width="210" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="rgsa8mZJjS7UXX8SLwmR-27" value="Private S3 Bucket&lt;br&gt;&lt;font style=&quot;font-size: 10px;&quot; face=&quot;monospace&quot;&gt;static-analysis-malware&lt;/font&gt;" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;" parent="1" vertex="1">
+          <mxGeometry x="148.5" y="130" width="171" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="rgsa8mZJjS7UXX8SLwmR-28" value="FSL" style="shape=process;whiteSpace=wrap;html=1;backgroundOutline=1;" parent="1" vertex="1">
+          <mxGeometry x="39" y="50" width="90" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="rgsa8mZJjS7UXX8SLwmR-29" value="Results&lt;br&gt;DB / Service" style="shape=process;whiteSpace=wrap;html=1;backgroundOutline=1;" parent="1" vertex="1">
+          <mxGeometry x="30" y="768" width="110" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="rgsa8mZJjS7UXX8SLwmR-36" value="Downloads and analyzes the actual malware&lt;br style=&quot;font-size: 10px;&quot;&gt;&lt;br style=&quot;font-size: 10px;&quot;&gt;The malware file is not even stored on other Lambdas" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=1;fontColor=#FF0000;fillColor=none;strokeColor=#990000;perimeterSpacing=0;dashed=1;spacing=14;strokeWidth=2;fontSize=10;" parent="1" vertex="1">
+          <mxGeometry x="600" y="470" width="160" height="90" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

@@ -1,0 +1,85 @@
+<mxfile host="app.diagrams.net" modified="2023-06-12T15:10:26.908Z" agent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36" etag="z9h0BC_q9W0VPc6LPKl2" version="21.3.8" type="device">
+  <diagram name="Pagina-1" id="od_BGttL0ItzMASoLNF1">
+    <mxGraphModel dx="925" dy="539" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="-p1bK-LvGHBaAbdcH1oh-12" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;" edge="1" parent="1" source="-p1bK-LvGHBaAbdcH1oh-1" target="-p1bK-LvGHBaAbdcH1oh-11">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="-p1bK-LvGHBaAbdcH1oh-13" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="-p1bK-LvGHBaAbdcH1oh-1" target="-p1bK-LvGHBaAbdcH1oh-2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="-p1bK-LvGHBaAbdcH1oh-1" value="Download malware&lt;br style=&quot;font-size: 11px;&quot;&gt;from S3 pre-signed URL" style="rounded=1;whiteSpace=wrap;html=1;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="70" y="30" width="150" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="-p1bK-LvGHBaAbdcH1oh-14" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;" edge="1" parent="1" source="-p1bK-LvGHBaAbdcH1oh-2">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="280" y="130.0322580645161" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="-p1bK-LvGHBaAbdcH1oh-17" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" edge="1" parent="1" source="-p1bK-LvGHBaAbdcH1oh-2">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="145" y="190" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="-p1bK-LvGHBaAbdcH1oh-2" value="Limit execution time&lt;br&gt;to 13 minutes" style="rounded=1;whiteSpace=wrap;html=1;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="65" y="110" width="160" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="-p1bK-LvGHBaAbdcH1oh-11" value="Error: DOWNLOAD_FAILED" style="text;html=1;align=left;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="280" y="35" width="160" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="-p1bK-LvGHBaAbdcH1oh-15" value="Exit code: 124&lt;br&gt;Error: TIMEOUT_ERROR" style="text;html=1;align=left;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="280" y="110" width="150" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="-p1bK-LvGHBaAbdcH1oh-25" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.75;exitDx=0;exitDy=0;entryX=0.002;entryY=0.516;entryDx=0;entryDy=0;entryPerimeter=0;" edge="1" parent="1" target="-p1bK-LvGHBaAbdcH1oh-24">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="217.5" y="309" as="sourcePoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="-p1bK-LvGHBaAbdcH1oh-30" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="-p1bK-LvGHBaAbdcH1oh-18" target="-p1bK-LvGHBaAbdcH1oh-27">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="-p1bK-LvGHBaAbdcH1oh-18" value="&lt;font style=&quot;font-size: 11px;&quot;&gt;Run analysis&lt;br&gt;&lt;br&gt;(output: JSON file)&lt;br&gt;&lt;/font&gt;" style="shape=process;whiteSpace=wrap;html=1;backgroundOutline=1;" vertex="1" parent="1">
+          <mxGeometry x="72.5" y="190" width="145" height="140" as="geometry" />
+        </mxCell>
+        <mxCell id="-p1bK-LvGHBaAbdcH1oh-19" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="272.5" y="210.0322580645161" as="targetPoint" />
+            <mxPoint x="217.5" y="210" as="sourcePoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="-p1bK-LvGHBaAbdcH1oh-20" value="Exit code: 137&lt;br&gt;Error: MEMORY_LIMIT_EXCEEDED" style="text;html=1;align=left;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="272.5" y="190" width="200" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="-p1bK-LvGHBaAbdcH1oh-21" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1.014;exitY=0.433;exitDx=0;exitDy=0;exitPerimeter=0;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="275" y="259.0322580645161" as="targetPoint" />
+            <mxPoint x="219.52999999999997" y="259.62" as="sourcePoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="-p1bK-LvGHBaAbdcH1oh-22" value="Exit code: 14&lt;br&gt;Error: CAPA_CRASH" style="text;html=1;align=left;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="275" y="239" width="130" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="-p1bK-LvGHBaAbdcH1oh-24" value="Exit code: other non-zero&lt;br&gt;Error: UNKNOWN_ERROR" style="text;html=1;align=left;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="276.5" y="289" width="160" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="-p1bK-LvGHBaAbdcH1oh-29" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=-0.013;entryY=0.5;entryDx=0;entryDy=0;entryPerimeter=0;" edge="1" parent="1" source="-p1bK-LvGHBaAbdcH1oh-27" target="-p1bK-LvGHBaAbdcH1oh-28">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="-p1bK-LvGHBaAbdcH1oh-33" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="-p1bK-LvGHBaAbdcH1oh-27" target="-p1bK-LvGHBaAbdcH1oh-32">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="-p1bK-LvGHBaAbdcH1oh-27" value="GZip + Base64 output" style="rounded=1;whiteSpace=wrap;html=1;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="65" y="370" width="160" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="-p1bK-LvGHBaAbdcH1oh-28" value=".gz.base64 file &amp;gt; 6MB&lt;br&gt;Error: JSON_SIZE_EXCEEDED" style="text;html=1;align=left;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="276.5" y="370" width="180" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="-p1bK-LvGHBaAbdcH1oh-32" value="&lt;font style=&quot;font-size: 11px;&quot;&gt;Return out.gz.base64 file&lt;/font&gt;" style="shape=parallelogram;perimeter=parallelogramPerimeter;whiteSpace=wrap;html=1;fixedSize=1;" vertex="1" parent="1">
+          <mxGeometry x="60" y="450" width="170" height="40" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
