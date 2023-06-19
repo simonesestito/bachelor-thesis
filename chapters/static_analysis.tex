@@ -223,6 +223,13 @@ L'architettura è ben riassunta nel seguente diagramma, che andremo a spiegare:
 \subsection{Creazione dell'immagine}
 Prima era enorme (naive approach), poi ridotta sfruttando il multistage.
 
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{assets/dockerfile.png}
+    \caption{Docker multi-stage build, con le immagini intermedie}
+    \label{fig:static_dockerfile_multistage_build}
+\end{figure}
+
 Uso di CMD/ENTRYPOINT così da rendere l'immagine usabile sempre, che sia da URL o da cartella su cui itera.
 
 
