@@ -27,7 +27,35 @@ Perchè?
 \section{Hardening}
 
 \section{Anti-VM detection}
-Pafish
+Pafish, vediamo la differenza tra VM standard (fig. \ref{fig:pafish_standard_vm}) e Cuckoo (fig. \ref{fig:pafish_cuckoo}) con le sue tecniche anti-VM:
+
+\begin{figure}[H]
+\centering
+\begin{subfigure}{.5\textwidth}
+  \centering
+  \includegraphics[width=.9\linewidth]{assets/pafish_standard_vm_1.png}
+\end{subfigure}%
+\begin{subfigure}{.5\textwidth}
+  \centering
+  \includegraphics[width=.9\linewidth]{assets/pafish_standard_vm_2.png}
+\end{subfigure}
+\caption{Pafish eseguito in una classica VM Windows 7}
+\label{fig:pafish_standard_vm}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\begin{subfigure}{.5\textwidth}
+  \centering
+  \includegraphics[width=.9\linewidth]{assets/pafish_cuckoo_1.png}
+\end{subfigure}%
+\begin{subfigure}{.5\textwidth}
+  \centering
+  \includegraphics[width=.9\linewidth]{assets/pafish_cuckoo_2.png}
+\end{subfigure}
+\caption{Pafish eseguito sotto l'analisi di Cuckoo Sandbox}
+\label{fig:pafish_cuckoo}
+\end{figure}
 
 \subsection{DLL Injection e Windows Hook}
 mhook
