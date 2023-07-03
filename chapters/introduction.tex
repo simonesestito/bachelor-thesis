@@ -41,8 +41,8 @@ Si tratta di una base di conoscenza sviluppata da MITRE Corporation, che include
 
 Si focalizza sulle interazioni che il malware ha col sistema target, e raggruppa questi comportamenti in tattiche per fornire più contesto sulla tecnica utilizzata.
 \begin{itemize}
-    \item Le tattiche sono il \emph{perché} di una tecnica, indicando l'obiettivo che si intende perseguire, e servono da contenitore per le varie tecniche; nello standard iniziano per \texttt{TA} (es: \texttt{TA0043} - Reconnaissance - Ricognizione, l'avversario va ad ottenere informazioni sul sistema per capire come muoversi)
-    \item Le tecniche invece sono il \emph{come} di una specifica azione, e potrebbero far dedurre anche il \emph{cosa} un avversario ottiene come risultato della sua azione - particolarmente utile nella tattica TA0007 Discovery, dove si cerca di studiare la composizione del sistema target. \\
+    \item Le \textbf{tattiche} sono il \emph{perché} di una tecnica, indicando l'obiettivo che si intende perseguire, e servono da contenitore per le varie tecniche; nello standard iniziano per \texttt{TA} (es: \texttt{TA0043} - Reconnaissance - Ricognizione, l'avversario va ad ottenere informazioni sul sistema per capire come muoversi)
+    \item Le \textbf{tecniche} invece sono il \emph{come} di una specifica azione, e potrebbero far dedurre anche il \emph{cosa} un avversario ottiene come risultato della sua azione - particolarmente utile nella tattica TA0007 Discovery, dove si cerca di studiare la composizione del sistema target. \\
     Una tecnica è spesso composta da sotto-tecniche per essere ancora più specifici.
     Ad esempio, la tecnica \texttt{T1595.002} Vulnerability Scanning (dove si va capendo i software disponibili sul sistema target e la loro versione, con il possibile scopo di verificare se si allinea a una specifica versione vulnerabile di cui l'avversario già dispone di un exploit) è sotto-tecnica di \texttt{T1595} Active Scanning, e fa parte della tattica \texttt{TA0043} Reconnaissance vista al punto precedente.
 \end{itemize}
@@ -76,27 +76,57 @@ Si compone delle seguenti fasi \cite{cyber_kill_chain_360}, portando un esempio 
 
     \item \textbf{Command and Control (C\&C)}: andiamo a instaurare un canale di comunicazione tra noi e la vittima, così da controllarlo da remoto - la forma più basilare è l'avvio di una Reverse Shell criptata
 
-    \item \textbf{Azioni sugli obiettivi}: eseguiamo le azioni più disparate, in base a ciò che vogliamo fare noi come attaccanti - nella CTF, andremo a leggere un file contenente il flag, simbolicamente un dato sensibile sul sistema della vittima
+    \item \textbf{Azioni sugli obiettivi}: eseguiamo le azioni più disparate, in base a ciò che vogliamo fare noi come attaccanti - nel caso CTF, andremo a leggere un file contenente il flag, simbolicamente un dato sensibile sul sistema della vittima
 \end{enumerate}
 
 \section{Tipi di sistemi di protezione}
-Antivirus, EDR, XDR
+Ora che abbiamo visto tutte queste minacce, viene spontaneo chiedersi come sia possibile proteggersi.
 
-\subsection{Come funziona la sicurezza nelle aziende}
-\begin{itemize}
-    \item IDS, IPS 
-    \item https://www.youtube.com/watch?v=j7Cu0lxjW-o
-    \item Ruolo degli Agent e altri sistemi
-\end{itemize}
+Il tipo più basilare di software per la protezione è l'\textbf{antivirus}. Questa tipologia di strumenti di protezione si va a concentrare sui singoli computer endpoint, e sfrutta modelli euristici per la rilevazione di vari tipi noti di malware, analizzando \emph{file su disco}.
+
+Ben più potente è l'EDR, acronimo di \textbf{Endpoint Detection and Response}, che sfrutta l'\emph{analisi comportamentale} per rilevare e contrastare anche minacce sconosciute, basandosi sui loro comportamenti. Ad esempio, se vediamo che, dopo aver aperto un file scaricato da Internet, il processo del programma che ne permette la visualizzazione inizia a fare operazioni fuori dal normale funzionamento, come aprire una shell o modificare file o registri di sistema, sicuramente andrà terminato e riportato come incidente, che poi andrà gestito da chi di competenza.
+La sostanziale differenza è il passaggio da semplice analisi su disco a una profonda analisi comportamentale, sfruttando strumenti forniti dal sistema operativo come Microsoft ETW \emph{(Event Tracing for Windows)} o eseguire l'hooking delle syscall manualmente - tecnica ben più complessa ed error-prone.
+
+Infine, con un XDR (\textbf{eXtended Detection and Response}) andiamo ad allargare gli elementi sotto la protezione del software in questione, permettendo un'integrazione anche con reti, firewall, log di sicurezza e molto altro.
+In questo modo, ha la potenza di aggregare e correlare eventi da più fonti, rilevando minacce sofisticate che verrebbero altrimenti ignorate.
+Un esempio in questa categoria è \emph{SentinelOne XDR}.
 
 \section{Cyber Threat Intelligence}
 \label{chap:cyber_threat_intelligence}
+L'area di Threat Intelligence si occupa di raccogliere tutta una serie di dati dai vari elementi,
+per poi aggregarli e compiere analisi sulle informazioni ottenute, al fine di rilevare minacce anche sofisticate e prendere decisioni sulla sicurezza in maniera più veloce e consapevole.
 
-\section{Ruolo ricoperto dall'azienda}
+La Threat Intelligence è un tassello estremamente importante nella sicurezza di un sistema informatico, soprattutto se unito al MITRE ATT\&CK framework: documentando i profili con cui l'avversario opera (come \texttt{APT29} - i profili sono insiemi di attività tipiche del modo di operare di alcuni gruppi nel panorama cyber), ma anche individuando la tecnica più efficacemente così da raggruppare tra loro più attacchi con caratteristiche comuni.
+In questo modo, è possibile focalizzarsi maggiormente sulle tecniche che sono maggiormente usate in un dato profilo di attacco.
 
-\section{Il problema}
-Gyala Products (Endpoint, Network Probes, Mobile Agent) need a capability to enable detection of both unauthorised and malicious behaviours.
-The ability of perform high quality detection is one of the distinctive trait between different security solutions and has a direct repercussion to customer satisfaction and brand reputation.  
-Malware Analysis should be considered an integrated, as part of product development, and continuous process that adds value in gyala products and makes them effective and distinctive on the market.
+Esempi di come particolari avversari, delineati sotto un profilo, usano le proprie tecniche sono documentati nella pagina ATT\&CK corrispondente.
+Studiandone la metodologia di attacco, è possibile replicarlo in fase di emulazione \emph{(Adversary Emulation)} per capire fino in fondo come difendersi da attacchi similari, e testare le proprie difese, nonché eseguire test di rilevazione.
 
-lo scopo è ridurre i costi di virustotal, che si usa tantissimo, e potenziare il set di strumenti a disposizione dell'analista, potenzialmente integrandoli tutti in uno con sistema di plugin
+Per questo e altri motivi, come vedremo, nella prima fase di analisi integreremo questo framework per la categorizzazione delle capabilities di un eseguibile.
+
+\medskip
+
+Un altro importante ruolo della Threat Intelligence, maggiormente vicino al progetto realizzato, è quello di analizzare i malware coinvolti negli attacchi noti o forniti da clienti qualora ne chiedessero l'analisi approfondita. Proprio a questo scopo, il proprio lavoro viene nettamente agevolato da strumenti di analisi automatica più estendibili possibile, così da avere fin da subito tutti i dati su cui lavorare.
+
+\section{Contesto d'uso del progetto}
+Una volta vista una panoramica superficiale di questo ambito della sicurezza informatica,
+andiamo ad analizzare il contesto in cui si va ad inserire il progetto realizzato.
+
+L'azienda ospitante offre, come suo core business, sistemi di EDR e XDR.
+Questi sistemi usano programmi Agent installati nei vari endpoint, che sonde usate per analizzare il traffico di rete nei vari livelli ISO-OSI, nonché analisi sui dispositivi OT.
+
+Soprattutto in riferimento all'Agent installato sugli endpoint, esso andrà a rilevare eseguibili con comportamenti anomali o sconosciuti e li andrà ad inviare al sistema di Threat Intelligence, che valuterà con una data confidence se siano o meno malevoli.
+La capacità di eseguire detection di alta qualità è uno dei tratti distintivi tra le diverse soluzioni di sicurezza esistenti sul mercato e ha una diretta ripercussione sulla soddisfazione del cliente finale dell'azienda, oltre alla propria reputazione come brand.
+Proprio in questo punto cruciale, viene l'esigenza dietro il progetto realizzato.
+
+\subsection{Il problema da risolvere}
+Lo scopo principale è la costruzione di un proprio sistema interno di analisi di malware automatizzata, eliminando le ultime dipendenze con servizi terzi quali VirusTotal, sia per un fattore economico che di flessibilità nei propri prodotti.
+
+Un aspetto importante mantenuto chiaro per tutto il corso del progetto è proprio la flessibilità che deve essere garantita a questo nuovo strumento di essere esteso e maggiormente integrato nel corso della propria esistenza. Com'è intuibile infatti, il sistema qui creato verrà successivamente usato come base per la propria architettura di analisi malware automatizzata, che si andrà ad interfacciare con i vari prodotti.
+
+\subsection{Architettura generale}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%Agent? FSL? Chi parla con chi? Perchè? Quando?
+%IN BREVISSIMO
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
