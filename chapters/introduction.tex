@@ -124,9 +124,59 @@ Lo scopo principale è la costruzione di un proprio sistema interno di analisi d
 
 Un aspetto importante mantenuto chiaro per tutto il corso del progetto è proprio la flessibilità che deve essere garantita a questo nuovo strumento di essere esteso e maggiormente integrato nel corso della propria esistenza. Com'è intuibile infatti, il sistema qui creato verrà successivamente usato come base per la propria architettura di analisi malware automatizzata, che si andrà ad interfacciare con i vari prodotti.
 
-\subsection{Architettura generale}
+\subsection{Interfacciamento con gli altri servizi}
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%Agent? FSL? Chi parla con chi? Perchè? Quando?
-%IN BREVISSIMO
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+Il progetto si andrà ad integrare nella nuova architettura di sistema proprietaria dell'azienda ospitante.
+Seppur è ancora in costruzione, per cui alcuni aspetti potrebbero variare tra il momento della scrittura e la loro effettiva realizzazione, ne viene delineato lo stato dell'arte.
+
+Il punto di partenza è rappresentato dall'Agent, nominato poco fa e installato sui vari endpoint ove possibile, che raccoglie eseguibili sospetti e che reputa necessitino un'analisi più approfondita.
+Siccome spesso si trova all'interno di una rete isolata, dove non è permessa la comunicazione con qualsiasi host Internet, può inviare gli eseguibili al COS. Più precisamente, inizialmente l'Agent non conosce ancora se siano già presenti analisi, così per questioni di efficienza invia solo il suo hash, inviando poi l'intero file solo in caso di esito negativo.
+
+Il COS si occuperà di mantenere una coda di analisi, per non sovraccaricare il resto dei sistemi.
+Invierà il file o l'hash ad FSL, che si pone come middleware per le API della Threat Intelligence.
+
+Attualmente viene interrogata l'API di VirusTotal Enterprise per ottenere il maggior numero di informazioni, ma come abbiamo detto questa è la parte più critica a causa degli ingenti costi (fig. \ref{fig:fsl_general_arch_vt_success}).
+
+In caso negativo, verrà invocato il progetto qui realizzato. Quindi, l'Agent invierà il file (non più l'hash) al COS, che lo inoltrerà alla nostra Sandbox, che si compone di una parte di analisi statica e di una dinamica (fig. \ref{fig:fsl_general_arch_sandbox_invoke}). Come vedremo, la fase di analisi statica avrà come trigger l'upload di un file su uno specifico bucket S3.
+
+\section{Architettura generale della Sandbox}
+
+Il sistema di analisi qui realizzato, chiamato per brevità anche \emph{Sandbox},
+si compone di due parti, indipendenti l'una dall'altra al fine di mantenere una massima modularità.
+Qui sono riportate come introduzione le due architetture in linea di massima, che verranno poi ben dettagliate nelle apposite sezioni di seguito.
+
+Per quanto concerne l'aspetto statico, ci si avvarrà di Amazon Web Services per il funzionamento,
+sfruttando principalmente i servizi di cloud storage S3 Bucket e di esecuzione Lambda, per minimizzare i costi e avere un sistema flessibile.
+Una volta analizzato il file, la Threat Intelligence, mediante le sue API, riceverà gli stati di inizio e fine del processo, inclusi i risultati in un formato JSON concordato. Lo andrà a salvare e lo userà nelle future richieste con lo stesso hash (fig. \ref{fig:fsl_general_arch_sandbox_cached}).
+
+Al contempo, l'aspetto dinamico si avvale di una già nota sandbox open-source quale Cuckoo Sandbox,
+su cui è stato costruito il resto del sistema completo,
+andando a installare il software, configurare il sistema a livello di firewall e SystemD Unit,
+nonché creare nuovi moduli al fine di integrare tool nuovi, e un sistema di reporting che si basa su un client Python sviluppato appositamente per lo scopo.
+
+\begin{figure}
+    \centering
+    \begin{subfigure}[b]{0.48\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{assets/fsl_general_arch_sandbox_invoke.png}
+        \caption{Necessario invocare la sandbox}
+        \label{fig:fsl_general_arch_sandbox_invoke}
+    \end{subfigure}
+    \begin{subfigure}[b]{0.48\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{assets/fsl_general_arch_sandbox_cached.png}
+        \caption{Risultati della Sandbox già in database}
+        \label{fig:fsl_general_arch_sandbox_cached}
+    \end{subfigure}
+    \hfill
+    \vspace{0.5cm}
+    \hfill
+    \begin{subfigure}[b]{0.48\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{assets/fsl_general_arch_vt_success.png}
+        \caption{Vecchio flusso prima della creazione della Sandbox}
+        \label{fig:fsl_general_arch_vt_success}
+    \end{subfigure}
+    \caption{Schema generale di funzionamento dell'architettura nei vari casi}
+    \label{fig:fsl_general_arch}
+\end{figure}

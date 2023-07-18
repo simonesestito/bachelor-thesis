@@ -193,12 +193,10 @@ Siccome non possiamo agire direttamente su questo aspetto per eseguire il tool, 
 \begin{minted}{python}
 times = {
     k: v['elapsed_time']
-    for k, v in times.items()
-    if file_types[k] != 'pe'
+    for k, v in times.items() if file_types[k] != 'pe'
 }
 avg_wasted_time = sum(times.values()) / len(times)
 print(f'{avg_wasted_time:.2f} sec. per unsupported file (avg)')
-
 # 58.77 sec. per unsupported file (avg)
 \end{minted}
 \label{code:static_analysis_capa_count_wasted_time}
@@ -298,12 +296,64 @@ def get_section_names(file_path):
 Notiamo come questa tecnica funzioni solo in ambito Windows, mentre su sistemi GNU/Linux notiamo con strumenti quali \texttt{readelf} che il file sia privo di header delle sezioni
 (in accordo con la regola CAPA stessa, che infatti include questo match solo se ci troviamo su un file PE, come indicato dall'apposita riga \texttt{- format: pe}).
 
-%%%%%%%%%%%%% https://reverseengineering.stackexchange.com/questions/23264/can-missing-section-headers-elf-files-still-be-executed-dangerous
+Negli eseguibili in formato ELF infatti è più comune trovare una situazione in cui l'header delle sezioni è mancante. Infatti, tale informazione non è usata in alcun modo dal kernel durante il caricamento in memoria del programma, nella creazione della process image. Inoltre, non è indicatore di azioni malevoli, ma sicuramente della volontà di rendere l'analisi più difficile, il cui caso può riguardare anche binari di produzione di software proprietario closed-source.
 
 \subsubsection{Analisi dell'entropia}
-Notiamo un notevole aumento dell'entropia causato dalla compressione.
+Una caratteristica comune di binari compressi o con payload criptati è l'aumento di entropia. Infatti, sia la compressione che la crittografia vanno ad aumentare l'entropia all'interno di uno stesso blocco di file, motivo per cui è essenziale eseguire la compressione di un file prima della sua crittazione, altrimenti l'algoritmo di compressione sarebbe molto meno efficace.
 
-binwalk -E subplot
+Come esempio, è stato preso un eseguibile il cui sorgente è ininfluente, compilato con il compilatore C \texttt{gcc} e poi calcolata l'entropia sia prima che dopo averlo pacchettizzato con UPX. I grafici sono stati generati tramite l'ausilio di uno script Python creato ad-hoc e sfruttando il calcolo dell'entropia di Shanon.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.75\textwidth]{assets/entropy_script_terminal.png}
+    \caption{Esecuzione dello script per il calcolo dell'entropia e uso di UPX}
+    \label{fig:entropy_script_terminal}
+\end{figure}
+
+\begin{figure}[!htb]
+    \centering
+    \begin{subfigure}[t]{0.48\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{assets/patriot-original.exe.png}
+        \caption{Entropia del file originale}
+    \end{subfigure}
+    \begin{subfigure}[t]{0.48\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{assets/patriot-upx.exe.png}
+        \caption{Entropia del file pacchettizzato con UPX}
+    \end{subfigure}
+    \caption{Confronto dell'entropia prima e dopo l'uso di UPX}
+    \label{fig:entropy_upx_comparison}
+\end{figure}
+
+\begin{figure}[htbp]
+    \begin{subfigure}[t]{0,48\textwidth}
+        \begin{gather*}
+            H(x) = - \sum_{i=1}^{n} \frac{count_i}{N} \log{\left(\frac{count_i}{N}\right)}
+        \end{gather*}
+    \end{subfigure}
+    \begin{subfigure}[t]{0,48\textwidth}
+        \begin{minted}{python}
+def calculate_entropy(data):
+    entropy, size = 0, len(data)
+    if size <= 1: return entropy
+
+    byte_count = [0] * 256
+    for byte in data:
+        byte_count[byte] += 1
+
+    for count in byte_count:
+        if count > 0:
+            probability = float(count) / size
+            entropy -= probability \
+                * math.log(probability, 2)
+
+    return entropy
+        \end{minted}
+    \end{subfigure}
+    \caption{Formula dell'entropia di Shannon e codice Python per il calcolo su un chunk}
+    \label{fig:shannon_entropy_formula}
+\end{figure}
 
 %%%%%%%%%%%%% http://blog.dkbza.org/2007/05/scanning-data-for-entropy-anomalies.html
 %%%%%%%%%%%%% https://fsec404.github.io/blog/Shanon-entropy/
