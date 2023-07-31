@@ -119,7 +119,7 @@ Questa rappresenta un grande vantaggio per l'integrazione con altri strumenti di
 Tuttavia, non tutti gli eseguibili sono supportati da capa, proprio per i motivi precedentemente elencati riguardanti i file offuscati o pacchettizzati. A questo scopo, sono presenti all'interno del set standard di capa, delle regole
 (sotto il namespace \texttt{internal/limitation/file} \footnote{\url{https://github.com/mandiant/capa-rules/tree/master/internal/limitation/file}})
 che se hanno un match col file in analisi, capa si arresterà non ritenendo più affidabili i propri risultati.
-Questo, come vedremo nel prossimo paragrafo, ci costerà troppo tempo e andrà risolto in un altro modo, individuato in \ref{chap:static_analysis_obfuscated}.
+Questo, come vedremo nel prossimo paragrafo, ci costerà troppo tempo e andrà risolto in un altro modo, individuato in \ref{chap:static_custom_file_detector}.
 
 \subsection{Analisi dell'uso delle risorse}
 Vogliamo analizzare l'uso di risorse da parte di capa con una varietà di file diversi, ossia i 40 sample precedentemente citati da VirusTotal, in termini di spazio e tempo, provando a cercare delle correlazioni con altri dati a nostra disposizione, al fine di eventualmente poter eseguire delle ottimizzazioni.
@@ -222,6 +222,7 @@ Come soluzione, dobbiamo trovare un sistema per riconoscere preventivamente che 
 
 %\newpage
 \section{Riconoscitore custom del tipo di file}
+\label{chap:static_custom_file_detector}
 Partendo dalla necessità di velocizzare l'operazione di riconoscimento del file, in sostituzione dell'esecuzione del comando \texttt{capa -r anti-analysis} che può portare a richiedere diversi minuti a seconda del numero di funzioni presenti nel file, come visto in figura \ref{fig:capa_correlation_plot},
 dobbiamo ricorrere a una diversa soluzione.
 
@@ -361,14 +362,19 @@ def calculate_entropy(data):
 \subsection{Inno-Setup Installer}
 Con Inno-Setup, possiamo notare come sia ancora più semplice il riconoscimento. Infatti, non abbiamo bisogno di andare a vedere le sezioni, ma è sufficiente controllare la presenza di alcune stringhe statiche nel file.
 
+InnoSetup è un famosissimo installer per Windows e, come tale, non permette un'analisi statica
+efficace. Infatti, nulla vieta che appaia come lecito per poi andare a runtime a scaricare e installare il vero payload malevolo, ma tale comportamento è affidato alla parte dinamica dell'analisi, dove sarà possibile osservare anche tutti i file scaricati, oltre all'attività di rete e tutte le syscall richiamate.
+
 Nuovamente, andiamo a paragonare la regola capa alla nostra implementazione:
 
+\begin{minipage}[]{\linewidth}
 \begin{minted}{yaml}
 features:
     - and:
       - string: /^Inno Setup Setup Data \(/
       - string: /^Inno Setup Messages \(/
 \end{minted}
+\end{minipage}
 
 \begin{minted}{python}
 def is_innosetup(file_path):
@@ -438,6 +444,10 @@ class InnoSetupDetector(StringsRule):
 Sia per statici che in memoria dei processi.
 
 Ora però usate solo per analizzare staticamente un file eseguibile.
+
+\section{Fuzzy hashing}
+SSDeep
+\url{https://www.sciencedirect.com/science/article/pii/S1742287606000764}
 
 \section{Automazione su AWS}
 
@@ -573,3 +583,5 @@ Non siamo ancora giunti al punto di rilasciare il progetto e attribuirgli una ve
     \caption{Struttura dei branch Git}
     \label{fig:git_branches_diagram}
 \end{figure}
+
+\section{CI/CD Pipeline}
