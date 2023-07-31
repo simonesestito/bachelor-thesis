@@ -58,25 +58,25 @@ Si tratta di un modello simile al MITRE ATT\&CK framework (sez. \ref{chap:mitre_
 \begin{figure}[h]
     \centering
     \includegraphics[width=0.6\textwidth]{assets/cyber_kill_chain.png}
-    \caption{(diritti di uso dell'immagine concessi dall'autore "Fondazione F3RM1")}
+    \caption{(crediti immagine: "Fondazione F3RM1")}
     \label{fig:cyber_kill_chain}
 \end{figure}
 
-Si compone delle seguenti fasi \cite{cyber_kill_chain_360}, portando un esempio noto, alla base anche della challenge \emph{Pilgrimage} della piattaforma \emph{HackTheBox}:
+Si compone delle seguenti fasi \cite{cyber_kill_chain_360}, portando un esempio tipico:
 \begin{enumerate}
-    \item \textbf{Ricognizione}: identificazione dei punti di accesso a un sistema e sue vulnerabilità, derivabili tramite analisi attiva (uso di strumenti come \emph{nmap} in maniera più o meno aggressiva) o passiva, leggendo informazioni già da fonti note (come \emph{Shodan.io} partendo da un indirizzo IP): nell'esempio notiamo che è esposta la cartella .git della Git repository, da cui estraiamo il sorgente della webapp, trovando l'uso di ImageMagick 7.1.0-49
+    \item \textbf{Ricognizione}: identificazione dei punti di accesso a un sistema e sue vulnerabilità, derivabili tramite analisi attiva (uso di strumenti come \emph{nmap} in maniera più o meno aggressiva) o passiva, leggendo informazioni già da fonti note (come \emph{Shodan.io} partendo da un indirizzo IP): ad esempio, possiamo notare come siano presenti ed esposti servizi con versioni obsolete / vulnerabili
     
-    \item \textbf{Armamento}: creazione del vero e proprio malware da utilizzare nell'attacco, nell'intento di sfruttare la vulnerabilità individuata - nell'esempio creiamo la nostra immagine PNG ad-hoc
+    \item \textbf{Armamento}: creazione del vero e proprio malware da utilizzare nell'attacco, nell'intento di sfruttare la vulnerabilità individuata - ad esempio creiamo un pacchetto IP con scapy
 
-    \item \textbf{Consegna}: il payload creato deve essere consegnato alla vittima in qualche modo, come una mail di phishing o un form di una pagina del sito web - quindi eseguiamo l'upload del PNG nel form dal sito
+    \item \textbf{Consegna}: il payload creato deve essere consegnato alla vittima in qualche modo, come una mail di phishing o un form di una pagina del sito web - quindi inviamo il pacchetto al server al suo indirizzo IP pubblico
 
-    \item \textbf{Exploit}: nella realtà dei fatti, si sta sfruttando una vulnerabilità individuata - nel nostro caso reale, sfruttiamo la CVE-2022-44268 e leggiamo il file del database della webapp, incluse le password
+    \item \textbf{Exploit}: nella realtà dei fatti, si sta sfruttando una vulnerabilità individuata - nel nostro caso reale, potremmo aver scatenato una RCE (Remote Code Execution) o altre tecniche
 
-    \item \textbf{Installazione}: dopo la riuscita dell'exploit, si scarica e avvia il payload malevolo, cercando di bypassare strategie esistenti di rilevazione, usando metodologie come obfuscation - nell'esempio, accediamo via SSH con la password e possiamo installare il nostro sistema
+    \item \textbf{Installazione}: dopo la riuscita dell'exploit, si scarica e avvia il payload malevolo, cercando di bypassare strategie esistenti di rilevazione, usando metodologie come obfuscation - nell'esempio, possiamo installare una reverse shell ad avvio automatico in file come `~/.bashrc` o `~/.profile`
 
-    \item \textbf{Command and Control (C\&C)}: andiamo a instaurare un canale di comunicazione tra noi e la vittima, così da controllarlo da remoto - la forma più basilare è l'avvio di una Reverse Shell criptata
+    \item \textbf{Command and Control (C\&C)}: andiamo a instaurare un canale di comunicazione tra noi e la vittima, così da controllarlo da remoto - qui possono essere utili strumenti come Havoc C2.
 
-    \item \textbf{Azioni sugli obiettivi}: eseguiamo le azioni più disparate, in base a ciò che vogliamo fare noi come attaccanti - nel caso CTF, andremo a leggere un file contenente il flag, simbolicamente un dato sensibile sul sistema della vittima
+    \item \textbf{Azioni sugli obiettivi}: eseguiamo le azioni più disparate, in base a ciò che vogliamo fare noi come attaccanti, come leggere un file contenenti informazioni sensibili o eseguire il dump del database
 \end{enumerate}
 
 \section{Tipi di sistemi di protezione}
