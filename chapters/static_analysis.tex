@@ -81,6 +81,7 @@ Anch'esso ha il proprio magic number ai fini di essere identificato correttament
 \footnote{Maggiori dettagli sono disponibili alla pagina \url{https://learn.microsoft.com/en-us/windows/win32/debug/pe-format}}
 
 \section{Capa: capabilities}
+\label{chap:capa}
 Per i test che vedremo in questa sezione, sono stati scaricati \textbf{40 sample} di malware reali da VirusTotal casualmente, e nelle varie fasi di miglioramento ed evoluzione, soprattutto in merito all'analisi delle capabilities, sono stati fatte numerose prove usando come campioni proprio questi sample.
 
 Per \emph{capabilities} intendiamo le funzionalità che va a usare il programma, ossia ciò che è capace di svolgere durante la propria esecuzione. Esempi di capabilities possono essere la connessione a un server remoto, la modifica di chiavi di registro, o la creazione di un processo figlio, solo per citarne qualcuna.
@@ -113,7 +114,7 @@ Questa rappresenta un grande vantaggio per l'integrazione con altri strumenti di
     \centering
     \includegraphics[width=0.6\textwidth]{assets/capa_example_rule.png}
     \caption{Regola capa per rilevare la creazione di un socket TCP}
-    \label{fig:enter-label}
+    \label{fig:capa_rule_socket_tcp}
 \end{figure}
 
 Tuttavia, non tutti gli eseguibili sono supportati da capa, proprio per i motivi precedentemente elencati riguardanti i file offuscati o pacchettizzati. A questo scopo, sono presenti all'interno del set standard di capa, delle regole
@@ -588,7 +589,7 @@ L'architettura è ben riassunta nel seguente diagramma, che andremo a spiegare:
     \centering
     \includegraphics[width=0.75\textwidth]{assets/docker_static_analysis_flow.png}
     \caption{Workflow dell'analisi in \texttt{static\_analysis\_malware\_tools} e possibili errori}
-    \label{fig:enter-label}
+    \label{fig:tools_workflow_static_analysis}
 \end{figure}
 
 Uso di CMD/ENTRYPOINT così da rendere l'immagine usabile sempre, che sia da URL o da cartella su cui itera.

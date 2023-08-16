@@ -19,7 +19,7 @@
 %% Identification %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \NeedsTeXFormat{LaTeX2e}[2009/01/01]
-\ProvidesClass{sapthesis}%
+\ProvidesClass{theme/sapthesis}%
 [2022/07/04 Sapienza University of Rome thesis class]
 
 
