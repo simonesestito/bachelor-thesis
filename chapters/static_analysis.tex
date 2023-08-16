@@ -220,6 +220,15 @@ Ci basta avere i dati di ciò che stiamo trattando, ad esempio l'output desidera
 
 Come soluzione, dobbiamo trovare un sistema per riconoscere preventivamente che si tratti di un file che non è possibile analizzare con capa.
 
+\subsection{Scrittura del parser}
+Capa, al contrario di ciò che vedremo di seguito, è un tool da usare da CLI e offre un output testuale.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 %\newpage
 \section{Riconoscitore custom del tipo di file}
 \label{chap:static_custom_file_detector}
@@ -437,7 +446,7 @@ class InnoSetupDetector(StringsRule):
         return len(self.extract_strings(file)) == len(self.strings)
     \end{minted}
     \caption{Regola di riconoscimento di InnoSetup, usando la nuova architettura}
-    \label{code:enter-label}
+    \label{code:innosetup_custom_recognizer}
 \end{code}
 
 \section{Yara: signature-based}
@@ -482,13 +491,21 @@ Allo scopo, le regole sono mantenute in locale e nell'analizzatore divise in car
 \end{itemize}
 
 \section{Fuzzy hashing}
-SSDeep
-\url{https://www.sciencedirect.com/science/article/pii/S1742287606000764}
+In un'ottica di uso su larga scale, è coerente con le esigenze aziendali avere un sistema di comparazione dei sample. Uno dei modi più semplici ma robusti per eseguire tale confronto è il fuzzy hashing. Questa tecnica consiste nel creare un hash del file che, al contrario di quanto accade nelle funzioni di hashing tradizionali come SHA-256 dove anche una minima modifica al file va a generare un hash completamente diverso, qui la differenza nell'impronta hash è commisurata alle modifiche in un dato file. Ne consegue che file simili, dove è cambiato poco, come una costante o un IoC qualsiasi, avranno un fuzzy hash molto simile.
 
-\section{Scrittura dei parser}
-Parser per capa e yara.
+Una delle funzioni più famose è \textbf{SSDeep}.
+In figura \ref{fig:ssdeep_demo_run} è stato creato un file random e una sua versione modificata alterando i primi 8 Byte: possiamo notare come solo il primo carattere sia modificato, di fatto riflettendo una modifica solo nella prima porzione di file. Al contrario, notiamo come un hashing come SHA256 presenta numerosissime modifiche, essendo indicato per tutt'altro scopo.
 
-Parser dal file testuale, con schemini.
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.9\textwidth]{assets/ssdeep_demo_run.png}
+    \caption{Esempio di fuzzy hashing tra file con solo alcuni byte modificati}
+    \label{fig:ssdeep_demo_run}
+\end{figure}
+
+In questo modo, possiamo lanciare una funzione di distanza tra stringhe e calcolando il numero di caratteri dell'hash diversi, stabilire un grado di somiglianza con altri sample noti. Nel caso di un malware mai visto prima, potremo in realtà scoprire che si tratti solamente di una versione modificata di un sample già nel nostro archivio, facendo risparmiare una quantità di lavoro e accellerando i processi.
+
+Il suo funzionamento è intuibile dal formato dell'impronta ottenuta. Si tratta di un \emph{Context-Triggered Piecewise Hash} ed è prodotto andando ad eseguire una funzione hash su ogni porzione di file di dimensione fissata, indicata nella prima parte. Seguono hash per ogni porzione, permettendo di capire chiaramente dove è situata la modifica. Inoltre, è relativamente resistente anche a zero padding, in cui l'attaccante potrebbe pensare di inserire nel payload un numero importante di zero per cercare di rendere più differenti posssibili i due sample.
 
 \section{Containerizzazione}
 \subsection{Flusso di esecuzione}
@@ -496,7 +513,7 @@ Parser dal file testuale, con schemini.
     \centering
     \includegraphics[width=0.75\textwidth]{assets/static_run_analysis_internal_tools.png}
     \caption{Workflow processo interno di \texttt{run\_analysis}}
-    \label{fig:enter-label}
+    \label{fig:static_analysis_internal_tools_workflow}
 \end{figure}
 
 \subsection{Efficienza delle regole}
