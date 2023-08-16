@@ -441,21 +441,77 @@ class InnoSetupDetector(StringsRule):
 \end{code}
 
 \section{Yara: signature-based}
-Sia per statici che in memoria dei processi.
+Un altro strumento adoperato per una più ampia analisi statica del file è Yara.
+Questo tool utilizza le cosiddette \emph{Yara rule} per descrivere una regola ed eseguire così signature matching.
 
-Ora però usate solo per analizzare staticamente un file eseguibile.
+\begin{code}
+    \begin{minted}[samepage]{yaml}
+rule ExampleRule
+{
+    strings:
+        $my_text_string = "text here"
+        $my_hex_string = { E2 34 A1 C8 23 FB }
+
+    condition:
+        $my_text_string or $my_hex_string
+}
+    \end{minted}
+    \caption{Regola di Yara di esempio}
+    \label{code:yara_example_rule}
+\end{code}
+
+Nella regola di esempio (listing \ref{code:yara_example_rule}) possiamo osservare nel blocco \emph{strings} le stringhe, o la regex, che di cui vogliamo fare il match, e successivamente la condizione per dare esito positivo alla regola.
+
+Questo strumento è ampiamente usato nell'ambito della malware analysis sia su file staticamente che durante la loro esecuzione per fare matching sulla memoria dei processi. Tuttavia, nello scopo del progetto viene relegato all'uso su base statica.
+
+\subsection{Collezione delle regole}
+Al contrario di capa (visto nella sez. \ref{chap:capa}), questo tool non viene fornito di un set di regole predefinite, ma dobbiamo andare a collezionarle autonomamente.
+Tuttavia, essendo molto famoso, si trovano facilmente repository di professionisti e aziende di rilievo che scelgono di rendere le loro regole disponibili alla community. Bisogna però notare come non tutte le regole siano di qualità e potrebbero in alcuni casi essere controproducenti, generando una quantità eccessiva di falsi positivi o non essere aggiornate o sufficientemente generalizzate da creare falsi negativi.
+A questo scopo, viene usato lo strumento di \emph{Retrohunt} di VirusTotal Enterprise, che permette di sapere anticipatamente quanti file fanno il match con una data regola, andando a usare l'ampissimo database di VirusTotal. In questo modo, se vedremo un numero troppo elevato di match, probabilmente la regola genera falsi positivi, con un discorso speculare in casi di troppi pochi match.
+
+I principali repository di regole Yara sono di Florian Roth
+\footnote{\url{https://github.com/Neo23x0/signature-base}}
+nonché di Apple per quanto concerne MacOS e altre fonti autorevoli in materia.
+
+Per ridurre l'esecuzione di regole inutili, viene sfruttato il rilevamento del sistema operativo precedentemente messo in opera per andare ad eseguire solo regole che abbiano quell'OS come target.
+Allo scopo, le regole sono mantenute in locale e nell'analizzatore divise in cartelle:
+\begin{itemize}
+    \item \emph{windows, macos, linux} a seconda del sistema operativo target
+    \item \emph{common} se sono state ritenute di uso generale per cui ha senso eseguirle in ogni caso, qualunque sia il tipo di file sotto analisi
+    \item \emph{unclassified} conterrà regole che ancora non sono state catalogate da parte dell'analista, ma si ha la necessità di integrarle al momento nel tool, eseguendole sempre; differisce da "common" per il fatto che queste regole potrebbero riguardare anche un solo OS ma temporaneamente le eseguiamo sempre - non possono essere inserite temporaneamente in "common" per una questione di ordine
+\end{itemize}
 
 \section{Fuzzy hashing}
 SSDeep
 \url{https://www.sciencedirect.com/science/article/pii/S1742287606000764}
 
-\section{Automazione su AWS}
-
-\subsection{Scrittura dei parser}
+\section{Scrittura dei parser}
 Parser per capa e yara.
 
 Parser dal file testuale, con schemini.
 
+\section{Containerizzazione}
+\subsection{Flusso di esecuzione}
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.75\textwidth]{assets/static_run_analysis_internal_tools.png}
+    \caption{Workflow processo interno di \texttt{run\_analysis}}
+    \label{fig:enter-label}
+\end{figure}
+
+\subsection{Efficienza delle regole}
+Precompilo tutto
+
+\subsection{Multi-stage build}
+Prima era enorme (naive approach), poi ridotta sfruttando il multistage
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{assets/dockerfile.png}
+    \caption{Docker multi-stage build, con le immagini intermedie}
+    \label{fig:static_dockerfile_multistage_build}
+\end{figure}
+
+\section{Automazione su AWS}
 \subsection{Architettura serverless}
 L'architettura è ben riassunta nel seguente diagramma, che andremo a spiegare:
 \begin{figure}[htbp]
@@ -470,23 +526,6 @@ L'architettura è ben riassunta nel seguente diagramma, che andremo a spiegare:
     \includegraphics[width=0.75\textwidth]{assets/docker_static_analysis_flow.png}
     \caption{Workflow dell'analisi in \texttt{static\_analysis\_malware\_tools} e possibili errori}
     \label{fig:enter-label}
-\end{figure}
-
-\begin{figure}[htbp]
-    \centering
-    \includegraphics[width=0.75\textwidth]{assets/static_run_analysis_internal_tools.png}
-    \caption{Workflow processo interno di \texttt{run\_analysis}}
-    \label{fig:enter-label}
-\end{figure}
-
-\subsection{Creazione dell'immagine}
-Prima era enorme (naive approach), poi ridotta sfruttando il multistage.
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=\textwidth]{assets/dockerfile.png}
-    \caption{Docker multi-stage build, con le immagini intermedie}
-    \label{fig:static_dockerfile_multistage_build}
 \end{figure}
 
 Uso di CMD/ENTRYPOINT così da rendere l'immagine usabile sempre, che sia da URL o da cartella su cui itera.
