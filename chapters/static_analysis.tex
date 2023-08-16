@@ -221,13 +221,11 @@ Ci basta avere i dati di ciò che stiamo trattando, ad esempio l'output desidera
 Come soluzione, dobbiamo trovare un sistema per riconoscere preventivamente che si tratti di un file che non è possibile analizzare con capa.
 
 \subsection{Scrittura del parser}
-Capa, al contrario di ciò che vedremo di seguito, è un tool da usare da CLI e offre un output testuale.
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+Capa, al contrario di ciò che vedremo di seguito, è un tool da usare da CLI e offre un output testuale, come in figura \ref{fig:capa_example_invocation}.
+
+Siccome al nostro strumento serve un output più machine-readable da restituire come risultato del processo di analisi, è stato scritto in Python un \textbf{parser} in grado di trasformare quel testo in un JSON.
+Le chiavi principali sono come le 3 tabelle, ossia 
+
 
 %\newpage
 \section{Riconoscitore custom del tipo di file}
@@ -506,6 +504,54 @@ In figura \ref{fig:ssdeep_demo_run} è stato creato un file random e una sua ver
 In questo modo, possiamo lanciare una funzione di distanza tra stringhe e calcolando il numero di caratteri dell'hash diversi, stabilire un grado di somiglianza con altri sample noti. Nel caso di un malware mai visto prima, potremo in realtà scoprire che si tratti solamente di una versione modificata di un sample già nel nostro archivio, facendo risparmiare una quantità di lavoro e accellerando i processi.
 
 Il suo funzionamento è intuibile dal formato dell'impronta ottenuta. Si tratta di un \emph{Context-Triggered Piecewise Hash} ed è prodotto andando ad eseguire una funzione hash su ogni porzione di file di dimensione fissata, indicata nella prima parte. Seguono hash per ogni porzione, permettendo di capire chiaramente dove è situata la modifica. Inoltre, è relativamente resistente anche a zero padding, in cui l'attaccante potrebbe pensare di inserire nel payload un numero importante di zero per cercare di rendere più differenti posssibili i due sample.
+
+\section{Strumenti minori}
+A dimostrazione della flessibilità dello strumento realizzato, sono stati integrati altri due strumenti importanti ma di minor rilievo rispetto a quelli appena enunciati.
+
+\begin{itemize}
+    \item \textbf{Detect-It-Easy}: permette di identificare il tipo di un file eseguendo un'analisi più profonda di quanto faccia \texttt{libmagic}, utilizzabile dall'utente attraverso il comando \texttt{file} su sistemi Unix, includendo tutta una serie di metadati come il tipo di installer presente, il linker usato, o altre informazioni di questo tipo
+    \item \textbf{ExifTool}: un tool Perl in grado di estrarre un gran numero di metadati in una varietà di formati di file, oltre agli eseguibili, incluse foto, PDF, file Office, e così via
+\end{itemize}
+
+\begin{code}
+\begin{minted}{json}
+{
+    "diec": {
+        "arch": "AMD64",
+        "detects": [{
+            "name": "unknown",
+            "options": "Console64,console",
+            "string": "linker: unknown(2.38)[Console64,console]",
+            "type": "linker",
+            "version": "2.38"
+        }],
+        "endianess": "LE",
+        "filetype": "PE64",
+        "mode": "64",
+        "type": "Console"
+    },
+    "exiftool": {
+        "ExifToolVersion": 12.62,
+        "FileType": "Win64 EXE",
+        "MachineType": "AMD AMD64",
+        "ImageFileCharacteristics": "Executable, No line numbers, No symbols, ...",
+        "CodeSize": 47616,
+        "InitializedDataSize": 122368,
+        "UninitializedDataSize": 5120,
+        "EntryPoint": "0x14d0",
+        "SubsystemVersion": 5.2,
+        "Subsystem": "Windows command line",
+        "ProductVersionNumber": "0.6.0.0",
+        "ObjectFileType": "Executable application",
+        "LanguageCode": "English (U.S.)",
+        "CharacterSet": "Windows, Latin1",
+        "FileDescription": "Paranoid Fish is paranoid",
+        "ProductName": "Paranoid Fish"
+    }
+}
+\end{minted}
+\caption{Output parziale dei dati ottenuti dai due strumenti minori}
+\end{code}
 
 \section{Containerizzazione}
 \subsection{Flusso di esecuzione}
