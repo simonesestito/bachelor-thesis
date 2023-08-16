@@ -374,14 +374,13 @@ efficace. Infatti, nulla vieta che appaia come lecito per poi andare a runtime a
 
 Nuovamente, andiamo a paragonare la regola capa alla nostra implementazione:
 
-\begin{minipage}[]{\linewidth}
+\begin{minipage}{\textwidth}
 \begin{minted}{yaml}
 features:
     - and:
       - string: /^Inno Setup Setup Data \(/
       - string: /^Inno Setup Messages \(/
 \end{minted}
-\end{minipage}
 
 \begin{minted}{python}
 def is_innosetup(file_path):
@@ -403,6 +402,7 @@ def is_innosetup(file_path):
     
     return match_setup and match_messages
 \end{minted}
+\end{minipage}
 
 \subsection{Design scalabile e modulare}
 Si nota immediatamente come una tale implementazione è poco scalabile e presenta numerose ridondanze da rimuovere.
