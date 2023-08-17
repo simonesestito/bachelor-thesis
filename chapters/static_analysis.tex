@@ -225,8 +225,67 @@ Come soluzione, dobbiamo trovare un sistema per riconoscere preventivamente che 
 Capa, al contrario di ciò che vedremo di seguito, è un tool da usare da CLI e offre un output testuale, come in figura \ref{fig:capa_example_invocation}.
 
 Siccome al nostro strumento serve un output più machine-readable da restituire come risultato del processo di analisi, è stato scritto in Python un \textbf{parser} in grado di trasformare quel testo in un JSON.
-Le chiavi principali sono come le 3 tabelle, ossia 
+Le chiavi principali sono come le 3 tabelle, ossia \texttt{capabilities}, \texttt{tactics} e \texttt{objectives}, oltre alla prima parte di \texttt{info} presente all'inizio, seguendo la struttura già fornita dall'output testuale.
 
+Analizziamo com'è stato eseguito il parsing a un livello più astratto.
+Prima di tutto, notiamo dalla figura \ref{fig:capa_example_invocation} come le linee vuote dividano le sezioni, quindi possiamo sfruttare questo fatto per stabilire la fine dell'una e il conseguente inizio dell'altra.
+Poi, le linee che ci interessano iniziano per \texttt{|}, escluso l'inizio per \texttt{|---}. Così facendo arriviamo a un output similare a quanto in figura \ref{fig:capa_out_first_parse}.
+
+Notiamo come la prima linea di ogni sezione contenga il nome della sezione stessa, fatta eccezione per le informazioni che però sono sempre la prima informazione contenuta, così da stabilire quale sotto-parser usare specifico per quella porzione di testo.
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.75\textwidth]{assets/capa_out_first_parse.png}
+    \caption{Prima trasformazione dell'output di capa}
+    \label{fig:capa_out_first_parse}
+\end{figure}
+
+Possiamo stabilire una tecnica per ogni sezione, come segue:
+\begin{itemize}
+    \item \textbf{Info} potrà essere vista come un dizionario (chiave-valore) con come chiave il testo della prima colonna, e il valore preso dalla seconda colonna alla riga corrispondente;
+    \item \textbf{Tactics} e \textbf{Objectives} possono essere viste entrambe come dizionari multi-valore, dove il valore è una lista -
+    infatti, se una riga ha una chiave (prima colonna non vuota), creeremo una nuova lista di valori, altrimenti potrà essere appeso alla lista corrispondente alla chiave precedente
+    \item \textbf{Capabilities} segue una logica analoga ma invertendo le colonne: qui la chiave è il namespace e come valore c'è la lista di capabilities stesse, con un maggiore parsing, che include sia il nome della capabilities che il numero di match (in figura \ref{fig:capa_out_first_parse} notiamo questa situazione nelle ultime 3 righe dell'output) 
+\end{itemize}
+
+In questo modo, si arriva ad un formato JSON machine-readable, che astrae dallo specifico formato di output di capa, che potrebbe cambiare tra major release, e allo stesso tempo organizzato in maniera sufficientemenete logica per essere consultato dall'analista di sicurezza nell'ambito del proprio studio del sample.
+
+\begin{code}
+\begin{minted}{json}
+{
+  "info": {
+    "os": "windows",
+    "format": "pe",
+    "sha256": "9c9ad4682a2c0031550396341f84f2ed47eda6d43751ceb158f52f810cc1e15a"
+  },
+  "tactics": [{
+    "tactic": "EXECUTION",
+    "techniques": [ "Shared Modules T1129" ]
+  }],
+  "objectives": [{
+    "objective": "COMMAND AND CONTROL",
+    "behaviors": [
+      "C2 Communication::Receive Data [B0030.002]",
+      "C2 Communication::Send Data [B0030.001]"
+    ]
+  }],
+  "capabilities": [{
+    "namespace": "load-code/pe",
+    "capabilities": [
+      {
+        "capability": "enumerate PE sections",
+        "matches_count": 4
+      },
+      {
+        "capability": "parse PE header",
+        "matches_count": 9
+      }
+    ]
+  }]
+}
+\end{minted}
+\caption{Esempio sintetico del formato di output successivo al parsing}
+\end{code}
 
 %\newpage
 \section{Riconoscitore custom del tipo di file}
