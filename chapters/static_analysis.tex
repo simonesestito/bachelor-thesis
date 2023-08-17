@@ -102,6 +102,9 @@ sfruttando delle regole aventi un proprio formato.
 Funziona andando prima ad estrarre delle \emph{features} come le stringhe incluse, codice disassemblato, control flow o file importati.
 Poi vengono lanciate le regole su queste features al fine di trarne un'implicazione logica e ottenere informazioni valide a fronte di un match con una o più regole capa.
 
+Si è rilevata la \emph{scelta ottimale} per il progetto per la sua natura open-source, per la grande azienda che è dietro la sua realizzazione, ma soprattutto per la potenza espressiva delle sue regole.
+Possiamo scrivere regole in un file di testo in formato YAML, seguendo la semplice struttura richiesta da capa, per aggiungere in futuro ulteriori regole, sia internamente che estratte da altri contributori nei propri repository. Infine, è possibile anche organizzarli per tag, così decidendo volta per volta quali specifiche regole eseguire, garantendo massima flessibilità.
+
 Il processo di feature extraction si basa in gran parte sull'header che abbiamo appena menzionato nella sezione \ref{chap:static_analysis_binary_structure}, comprese informazioni sulle funzioni esportate, tabella dei simboli (SymTab) e sezioni. Inoltre, il processo di disassemblaggio è molto complesso perché punta sia ad individuare features quali API calls, istruzioni speciali o riferimenti di stringhe/numeri poste in altre sezioni dell'eseguibile (come \texttt{.rodata} per le costanti), ma anche a ricostruire il control-flow minimizzando falsi positivi in caso di dead code o per distinguere tra funzioni e altri \emph{scope}. Alla base di questo step, c'è \texttt{ViviSect Feature Extractor}. \cite{capa_mandiant_blogpost}
 
 Una volta ottenute tutte le features di interesse, si procede a fare il match con le regole.
