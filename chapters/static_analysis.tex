@@ -617,7 +617,30 @@ A dimostrazione della flessibilità dello strumento realizzato, sono stati integ
 \end{code}
 
 \section{Containerizzazione}
+Al fine di utilizzare tutti questi strumenti in una maniera organizzata e flessibile,
+si arriva alla necessità di avere un sistema unico e portatile tra vari sistemi per l'esecuzione. La soluzione migliore a tale scopo è usare un Container Docker.
+Questo permette di avere un certo livello di isolamento tra lo strumento di analisi e il sistema host sul quale è realmente eseguito, senza tutti gli overhead che comporta una macchina virtuale. Inoltre, possiamo avviarlo a piacimento fornendo direttamente un input da analizzare, montando una cartella come volume read-only, e far si che si elimini automaticamente dopo la sua esecuzione.
+Dato lo scopo e l'ambito di applicazione del progetto, usare un container permetterà di eseguire il tutto in maniera più semplice possibile su Amazon Web Services (di seguito, AWS).
+
 \subsection{Flusso di esecuzione}
+Viene così costruito un chiaro flusso di esecuzione dei vari strumenti, parser e componenti accessorie realizzate, inclusa una chiara gestione degli errori e loro propagazione all'esterno in maniera documentata, al fine di avere una chiara integrazione con gli altri strumenti, quali FSL menzionato nell'introduzione al capitolo \ref{chap:intro_interface_with_other_services}. L'intero flusso è implementato attraverso uno \textbf{script sh} che controlla le condizioni dei vari tool in caso debbano essere gestite, o termina l'esecuzione propagando l'exit code allo script richiamante attraverso il flag \texttt{set -e} posto all'inizio.
+Viene usato \texttt{/bin/sh} come interprete anziché \texttt{/bin/bash} per ridurre la superficie di attacco in caso di future vulnerabilità in qualche strumento, o evitare di introdurne noi alcune date dalla grande varietà di funzionalità offerte da bash e di cui non abbbiamo alcun bisogno.
+
+Per prima cosa, si è deciso di eseguire Detect-It-Easy per avere una prima idea, seppur non comprensiva di tutti i casi limite di capa, del tipo di file che stiamo per analizzare. Il suo output viene salvato in un file JSON associato, che verrà consegnato al termine dell'analisi, ma da cui vengono estratte le prime informazioni essenziali per il resto del flusso, tra cui il sistema operativo e il tipo di file (PE, ELF, ...).
+
+Già da qui, se il file non viene rilevato come PE o ELF, andiamo a saltare l'esecuzione di \texttt{capa} che sicuramente condurrà ad un errore.
+Per coprire anche tutti gli altri casi precedentemente discussi, dobbiamo eseguire l'analizzatore statico costruito ad-hoc (sez. \ref{chap:static_custom_file_detector}). Questo andrà a controllare con molta più accuratezza se è un tipo di eseguibile supportato,
+controllando sia le situazioni descritte da alcune regole capa che l'architettura dato che è compatibile solo con x86 e x86\_64.
+
+Se ci troviamo in una situazione compatibile, viene eseguito \texttt{capa}. Questo è lo strumento più potente ma anche il più lento ed esoso di risorse, sia in termini di spazio che di tempo. Siccome è il più probabile al crash, viene gestito il suo exit-code fallimentare con un error message diverso dagli altri, per restituire al termine dell'esecuzione più informazioni possibili di debug e diagnostica, oltre ai log che però non sono direttamente inclusi nel file di risultato finale di analisi, ma dovranno essere collezionati separatamente.
+Come annunciato, l'output testuale di capa viene inviato al parser con una pipe, il quale darà in output il JSON risultante.
+
+Dopodicché si prosegue con l'esecuzione dell'altro importante strumento: \texttt{yara}. Offre la possibilità di indicare a runtime quali set di regole eseguire. Ricordiamo di aver provveduto alla divisione delle regole collezionate in collezioni per sistema operativo, quindi leggendo il sistema operativo precedentemente identificato, possiamo specificare quale collezione usare. In caso non si tratti di un eseguibile o sia un sistema operativo sconosciuto / non considerato, verranno eseguite tutte le regole in quanto i rischi di perdere informazioni utili in questo caso supererebbero i benefici del risparmio di regole.
+
+Infine, procediamo con l'esecuzione di strumenti quali ExifTool e fuzzy hashing con ssdeep.
+Tutti gli strumenti avranno così dato in output i propri risultati nel proprio file JSON. In conclusione, viene invocato un altro script Python che si occuperà di eseguire una validazione sintattica di tutti i risultati e, in caso di successo, eliminerà i file parziali per restituire l'unico report JSON complessivo di tutto.
+Questo ultimo layer di astrazione è utile sia per unificare i risultati intermedi che per avere la possibilità di modificare gli strumenti sottostanti con analoghi, potendo sfruttare questo ultimo passaggio per uniformare il formato dell'output così da rendere il tutto trasparente al chiamante.
+
 \begin{figure}[htbp]
     \centering
     \includegraphics[width=0.75\textwidth]{assets/static_run_analysis_internal_tools.png}
@@ -626,11 +649,45 @@ A dimostrazione della flessibilità dello strumento realizzato, sono stati integ
 \end{figure}
 
 \subsection{Efficienza delle regole}
-Precompilo tutto
+Noto che ad ogni esecuzione di un'immagine Docker all'interno di un ambiente containerizzato, il container finale verrà distrutto, ci si è resi conto di come alcune regole vedano sempre una precompilazione o caching ad ogni invocazione, quando sarebbe idealmente più ottimale eseguire questo step una sola volta.
+Dopo uno studio più approfondito di questi strumenti, è emerso come i due principali (ossia \texttt{capa} e \texttt{yara}) abbiano modi per eseguire questo step in anticipo.
+
+Per quanto concerne capa, successivamente aver analizzato il proprio processo di CI/CD
+\footnote{\url{https://github.com/mandiant/capa/blob/master/.github/workflows/build.yml}}
+disponibile nel repository GitHub da cui è possibile scaricarlo precompilato od ottenere il sorgente, ci si è resi conto che questo processo sarebbe stato realizzabile.
+Nel processo di build della nostra immagine Docker viene ora inserito un passaggio che permetta di:
+\begin{itemize}
+    \item Clonare il repository GitHub di capa
+    \item Eseguire il checkout del repository e dei propri submodules alla versione fissata, così da rendere la build al massimo replicabile in futuro
+    \item Inserire le regole personalizzate, rimuovendo le predefinite
+    \item Eseguire un caching delle regole ahead-of-time, come nel processo ufficiale di CI/CD
+    \item Ora poter compilare il nostro eseguibile di capa e usarlo nelle varie esecuzioni al posto del precompilato già disponibile
+\end{itemize}
+
+In secondo luogo, occupandoci anche del tool \texttt{yara}, si è visto come disponga di API Python che ne permettono l'uso. Seguendo la documentazione ufficiale, offre la possibilità di salvare su file la versione precompilata delle regole.
+Così, analogamente a quanto appena visto, è stato inserito uno step aggiuntivo nella build che prenda le regole personalizzate, esegua queste funzioni da uno script Python, salvando i file precompilati senza dover conservare anche le regole originali, avendo tuttavia cura di mantenere la struttura delle cartelle inalterata.
+
+Queste modifiche hanno permesso di rendere le esecuzioni più veloci di un tempo al momento trascurabile, ma che porterà maggiori benefici in futuro, quando il numero delle regole diventerà sostanzialmente più elevato, eseguendo uno step solo al momento di build e non ad ogni esecuzione.
 
 \subsection{Multi-stage build}
-Prima era enorme (naive approach), poi ridotta sfruttando il multistage
-\begin{figure}[H]
+Rimanendo in tema di build dell'immagine Docker, ci si rende subito conto come l'immagine prodotta in maniera naive abbia dimensioni di $>2$ GB. Essendo una dimensione non giustificabile dalla presenza di strumenti troppo pesanti, si è reso necessario trasformare il Dockerfile per utilizzare una metodologia multi-stage.
+Questa tecnica permette di generare e lavorare su tante immagini diverse, ad esempio per eseguire compilazioni, copiare codici sorgente, installare software di compilazione pesante poi mai più usato in fase di esecuzione, per poi distribuire solo l'ultima di questa serie di immagini, che dovrebbe ottimalmente contenere solo lo stretto indispensabile per una corretta esecuzione, rimuovendo il superfluo che resta nelle immagini intermedie non distribuite.
+
+Dividiamo il processo di build in vari step logici, avendo sempre cura di fissare l'hash delle immagini usate dal registry Docker Hub, così da avere la certezza di poter riprodurre la build anche in futuro e anche in caso di modifica/aggiornamento delle immagini corrispondenti a un dato tag:
+\begin{enumerate}
+    \item Partendo da una immagine Debian 12, installiamo python, pip e tutte le altre dipendenze richieste a tempo di compilazione o utilità come git
+    \item Nell'immagine di Python così ottenuta, creiamo un nuovo virtualenv e impostiamo le necessarie variabili d'ambiente; riguardo al virtualenv ricordiamo come non sia possibile eseguire lo script \texttt{.venv/bin/activate} come si farebbe normalmente su un sistema interattivo, perché ogni comando \texttt{RUN} in un Dockerfile esegue su una shell diversa, quindi dobbiamo modificare \texttt{PATH} e \texttt{PYTHONPATH} per puntare all'interno del virtualenv
+    \item In un'immagine, andiamo a clonare capa da GitHub, eseguire il checkout alla versione desiderata attraverso il tag di git e costruire l'eseguibile come precedentemente illustrato
+    \item Parallelamente, creiamo un'immagine che conterrà molte più dipendenze di build su cui andremo ad installare yara ed eseguire la precompilazione delle regole
+    \item Ripartendo da un'immagine Debian 12 slim pulita, installiamo solo Python e le librerie strettamente necessarie a runtime
+    \item Su questa, installiamo i tool secondari, come Detect-It-Easy o ExifTool che non richiedono passaggi aggiuntivi se non il download di un file
+    \item In conclusione, verrà copiato il codice sorgente del progetto realizzato e distribuita quest'ultima immagine
+    \item Esiste anche uno step di test preliminare, dove viene controllato che i comandi esistano nel \texttt{PATH} e poco altro, visto che i test funzionali veri e propri non sono inclusi nel Dockerfile, come dovrebbe essere da best practises
+\end{enumerate}
+
+Possiamo notare in figura \ref{fig:static_dockerfile_multistage_build} come il processo di build ad un certo punto si divida tra la precompilazione di capa e di yara. Sfruttando il più recente comando \texttt{docker buildx} al posto dell'ormai deprecato \texttt{docker build} possiamo ridurre i tempi di build dell'immagine finale di vari minuti, variabili a seconda del sistema su cui si esegue la build, ma pur sempre un gran risparmio di tempo ottenuto grazie all'effettiva parallelizzazione dei due branch.
+
+\begin{figure}[htbp]
     \centering
     \includegraphics[width=\textwidth]{assets/dockerfile.png}
     \caption{Docker multi-stage build, con le immagini intermedie}
