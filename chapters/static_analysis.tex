@@ -694,9 +694,84 @@ Possiamo notare in figura \ref{fig:static_dockerfile_multistage_build} come il p
     \label{fig:static_dockerfile_multistage_build}
 \end{figure}
 
+\subsection{Entrypoint e flessibilità}
+Come già annunciato, una delle linee guida mantenute a mente per l'intero progetto è quella della massima flessibilità degli strumenti creati. Qui vediamo una sua prima applicazione pratica.
+Un'immagine Docker ha due proprietà distinte ma poco frequentemente adoperate: \texttt{ENTRYPOINT} e \texttt{CMD}.
+L'entrypoint è quel comando che viene sempre eseguito all'avvio di un'immagine Docker e permette di eseguire una prima inizializzazione, come creare qualche cartella mancante, fare dei check di avvio essenziali o cambiare utente. Di default, un'immagine ha entrypoint \texttt{/bin/sh -c} e nessun comando specificato.
+Il comando realmente eseguito è l'entrypoint, ricevendo come argomento il CMD. Com'è subito possibile notare dal flag \texttt{-c}, nel caso del default entrypoint, questo non farà altro che eseguire i comandi usando la shell \texttt{/bin/sh}.
+
+Nel caso specifico di questo progetto, la divisione tra entrypoint e cmd viene notevolmente in aiuto nei casi in cui ci aspettiamo di avere vari utilizzi (implementati attraverso più cmd) ma vogliamo raccogliere a fattor comune le prime inizializzazioni obbligatorie (un unico entrypoint).
+L'entrypoint ora costruito, andrà ad eseguire varie operazioni di bootstrap come controllare se sta eseguendo all'interno di una runtime AWS Lambda o su un sistema Docker tradizionale, creare la cartella di output se non esistente e proseguire l'esecuzione con un utente non privilegiato, siccome su un ambiente Docker tradizionale è comune che vengano eseguite come root, non gradito nel nostro ambito. Seppur non è come eseguire come root nel sistema host, essere root in un container è comunque un eccesso di privilegi rispetto al minimo indispensabile.
+Ciò che deve essere eseguito è definito dal CMD che andrà a ricevere come argomento (essendo uno script, lo leggerà nella variabile "\texttt{\$@}").
+
+Al momento, sono realizzati vari script da usare come cmd a seconda del caso d'uso specifico:
+\begin{itemize}
+    \item \texttt{analyze\_multiple.sh} si aspetta di ricevere l'insieme dei file da analizzare nella cartella montata nella posizione di input, procedendo a scrivere i JSON risultanti nella cartella di output seguendo la struttura di directory dell'input;
+    \item \texttt{download\_and\_analyze.sh} si aspetta di ricevere come argomento un URL da cui scaricare con \texttt{wget} il sample da analizzare - è utile sia nei casi in cui non vogliamo far transitare il sample sul filesystem del sistema host, ma anche nel caso di AWS come vedremo nella prossima sezione
+\end{itemize}
+
+Il cmd viene specificato agevolmente al momento dell'esecuzione e corrisponde agli argomenti passati al comando \texttt{docker run} successivamente al nome dell'immagine. A titolo esemplificativo, se il comando eseguito è:
+\texttt{docker run -it -rm -v /home/simone/output:/app/output static-engine:latest} \\ \texttt{/app/src/download\_and\_analyze.sh https://example.com/malware.bin}
+lo script di entrypoint verrà eseguito ricevendo come argomenti il cmd, composto dallo script di download e analisi, nonché dall'URL del malware, che sarà successivamente l'argomento ricevuto da quest'ultimo script.
+
 \section{Automazione su AWS}
 \subsection{Architettura serverless}
-L'architettura è ben riassunta nel seguente diagramma, che andremo a spiegare:
+Per architettura serverless si intende un particolare tipo di soluzione ingegneristica dove si procede a creare ed eseguire software senza l'onere di gestire l'infrastruttura sottostante, come ad esempio gestire il proprio server fisico, configurarlo e mantenerlo aggiornato nel tempo. Questo permette un risparmio di tempo ed è meno error-prone se non si hanno figure professionali specializzate dedicate. Ad oggi è generalmente la soluzione da preferire nella maggioranza delle situazioni in termini di costo-opportunità.
+L'architettura è ben riassunta in figura \ref{fig:aws_static_lambdas_architecture} e si basa sul paradigma \emph{FaaS} (Function-as-a-Service), di seguito spiegata, dove l'entità principale della computazione è una funzione.
+
+Il flusso di esecuzione ha inizio con l'upload del sample su un bucket S3
+\footnote{S3 è un servizio di AWS che si occupa di object storage, un tipo di storage di file dove ciascuno è visto come un nome con il proprio contenuto in byte, metadati e poche altre informazioni - il nome S3 è acronimo di Simple Storage Service}
+che ha lo scopo di archiviare tutti i sample da analizzati o che sono stati analizzati, per costruire un proprio repository interno di sample, maligni o meno che siano.
+Su questo bucket è previsto che proceda al caricamento il componente aziendale FSL, parte dell'area di Threat Intelligence. Tuttavia, siccome non è ancora sviluppato ma è solo in programma, a fini di test e utilizzo iniziale, l'upload viene effettuato manualmente dalla console AWS, visto che non comporta alcuna differenza nel resto del processo.
+L'upload andrà così ad eseguire il trigger dell'evento \texttt{ObjectCreated:Put}, ascoltato dalla prima delle 3 lambda coinvolte. Bisogna prestare attenzione al fatto di dover ascoltare sia l'evento Put che \texttt{ObjectCreated:CompleteMultipartUpload} visto che in caso di caricamento di file grandi, verrà invocato solo l'ultimo evento. Se non fosse ascoltato, non verrebbe mai scatenata la prima lambda e, di conseguenza, tutto il resto dell'analisi verrebbe meno.
+
+La scelta architetturale di dividere l'esecuzione in 3 lambda anziché lasciar svolgere tutti i task a una sola Lambda, risiede nel voler minimizzare i permessi concessi alla fase di analisi. Seppur si tratta di un processo statico, quindi non prevede esecuzione del sample, non è in alcuna maniera escludibile una vulnerabilità di tipo RCE (Remote Code Execution) all'interno degli strumenti adoperati, o che verranno aggiunti successivamente,
+ma è anzi più frequente di quanto ci si possa aspettare, e la superficie di attacco tende ad aumentare in maniera direttamente proporzionale al numero e alla complessità dei tool adoperati.
+
+Al contrario, con questa soluzione, è stato possibile ridurre i permessi della fase di analisi, dove il contenuto del sample viene interpretato e non semplicemente trasferito sotto forma di byte o URL, ritenuto il momento più critico nell'intero processo. Può solamente:
+\begin{itemize}
+    \item Scrivere nelle proprie tracce di log su CloudWatch
+    \item Invocare unicamente la Lambda a sè successiva
+    \item Leggere solo il sample che deve analizzare
+\end{itemize}
+
+\noindent Non può quindi:
+\begin{itemize}
+    \item Accedere al bucket S3 per intero, prevenendo fughe di dati
+    \item Accedere al servizio della Threat Intelligence che conserva i dati sulle analisi e i loro risultati
+\end{itemize}
+
+\begin{code}
+\begin{minted}{json}
+{
+    "Version": "2012-10-17",
+    "Statement": [{
+        "Effect": "Allow",
+        "Action": [
+            "logs:PutLogEvents",
+            "logs:CreateLogGroup",
+            "logs:CreateLogStream"
+        ],
+        "Resource": "arn:aws:logs:*:*:*"
+    },
+    {
+        "Effect": "Allow",
+        "Action": [ "lambda:InvokeFunction" ],
+        "Resource": "<static_analysis_reporting ARN>"
+    }]
+}
+\end{minted}
+\label{code:aws_static_analysis_lambda_policy}
+\caption{JSON della policy assegnata alla Lambda dell'analisi}
+\end{code}
+
+Le policy assegnate alle varie entità su AWS sono state scritte da zero, mantenendo chiara la politica del minimo permesso concesso; sono state ritenute eccessivamente permissive le policy gestite fornite direttamente da AWS.
+
+\medskip
+
+La prima Lambda, chiamata \texttt{trigger\_new\_malware}, si occupa di ricevere l'evento invocato al termine dell'upload, quindi estrarre quali siano i nuovi file caricati, per ciascuno generare un \textbf{pre-signed URL} così da permettere la lettura del singolo oggetto per un periodo di tempo limitato e senza concedere permessi di lettura del bucket a terze entità.
+Andrà quindi a invocare in maniera asincrona la lambda di analisi, inviando nel payload l'URL appena generato e l'ID dell'analisi. L'ID è uno UUIDv4 generato in maniera pseudo-random e serve per tenere traccia dell'analisi durante la propria esecuzione, sia nei log che nel reporting finale per stabilire con certezza quale sia l'analisi a cui assegnare i risultati. Non appena l'analisi ha inizio, verrà informato l'ipotetico servizio di Threat Intelligence riguardo l'avvio con successo di questo nuovo task.
+
 \begin{figure}[htbp]
     \centering
     \includegraphics[width=\textwidth]{assets/aws_static_lambdas_architecture.png}
@@ -711,16 +786,15 @@ L'architettura è ben riassunta nel seguente diagramma, che andremo a spiegare:
     \label{fig:tools_workflow_static_analysis}
 \end{figure}
 
-Uso di CMD/ENTRYPOINT così da rendere l'immagine usabile sempre, che sia da URL o da cartella su cui itera.
+All'interno della lambda di analisi viene aggiunto un nuovo script da usare come cmd (\texttt{lambda\_entrypoint.sh)}: ha lo scopo di fornire l'interfaccia runtime Lambda necessaria per l'esecuzione in tale runtime.
+Non è possibile eseguire direttamente una immagine Docker così com'è su AWS Lambda, ma necessita di esporre una precisa interfaccia per compatibilità. Per rispettare questo requisito si può scegliere tra usare i container forniti da Amazon come base o usare altri strumenti. Nel nostro caso, trattandosi di un container molto poco straightforward, si è optati per la seconda opzione. È stato sufficiente invocare il modulo \texttt{awslambdaric} per eseguire uno script Python che espone una funzione avente la stessa interfaccia che ci si aspetta da una Lambda standard Python, ossia una funzione handler che accetti due parametri: l'evento e il context. Ci interessa principalmente l'evento, contenente il payload ricevuto durante l'invocazione.
 
-
-Serve eseguirla su Lambda = serve rispettare la Runtime Interface!
-
-
-\subsection{Deploy e hardening}
-Sicurezza e varie policy (hardening)
+Infine, per permettere anche un test della Lambda all'interno di una più simile runtime possibile all'ambiente di produzione, si sfrutta \texttt{aws-lambda-rie}, un tester con cui è possibile simulare l'ambiente finale eseguendo in locale.
 
 \subsection{Limiti delle Lambda}
+È bene sottolineare come le Lambda non siano lo strumento di esecuzione adatto in tutti i casi. In questa sezione vengono esposti i contro e le limitazioni che comportano, nonché i rimedi adottati per limitarne i problemi.
+
+Una delle prime limitazioni riguarda le risorse concesse in termini di potenza di calcolo
 
 CPU time e memoria. Gestione degli errori (status 137 OOM).
 
