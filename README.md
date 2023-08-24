@@ -12,10 +12,10 @@
 
 ---
 
-<a href="https://simonesestito.github.io/THESIS-REPO-TITLE/">
+<a href="https://raw.githubusercontent.com/simonesestito/bachelor-thesis/main/thesis.pdf">
     <img src=".github/assets/thesis-button.svg" alt="Download Thesis">
 </a>
-<a href="https://example.com">
+<a href="https://raw.githubusercontent.com/simonesestito/bachelor-thesis/main/presentation.pdf">
     <img src=".github/assets/presentation-button.svg" alt="Download Presentation">
 </a>
 
