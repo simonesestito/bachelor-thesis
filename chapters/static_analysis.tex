@@ -41,7 +41,7 @@ il magic number con cui possiamo riconoscere che si tratta di un ELF,
 l'architettura per la quale è stato compilato (\texttt{e\_machine})
 e l'indirizzo di memoria virtuale, indicato come un offset all'interno del file, che il sistema operativo dovrà eseguire per lasciare il controllo al nuovo processo nato (\texttt{e\_entry}).
 
-\begin{figure}[!htb]
+\begin{figure}[!ht]
     \centering
     \includegraphics[width=0.6\textwidth]{assets/elf_header.png}
     \caption{Header di un file ELF, letto con readelf}
@@ -792,13 +792,21 @@ Non è possibile eseguire direttamente una immagine Docker così com'è su AWS L
 Infine, per permettere anche un test della Lambda all'interno di una più simile runtime possibile all'ambiente di produzione, si sfrutta \texttt{aws-lambda-rie}, un tester con cui è possibile simulare l'ambiente finale eseguendo in locale.
 
 \subsection{Limiti delle Lambda}
-È bene sottolineare come le Lambda non siano lo strumento di esecuzione adatto in tutti i casi. In questa sezione vengono esposti i contro e le limitazioni che comportano, nonché i rimedi adottati per limitarne i problemi.
+È bene sottolineare come le Lambda non siano lo strumento di computazione adatto in tutti i casi. In questa sezione vengono esposti i contro e le limitazioni che comportano, nonché i rimedi adottati per limitarne gli effetti.
 
-Una delle prime limitazioni riguarda le risorse concesse in termini di potenza di calcolo
+Una delle prime limitazioni riguarda le risorse concesse dal server in termini di potenza di calcolo. Viene imposto a tutte le invocazioni un timeout estendibile fino a 15 minuti, e la potenza della CPU assegnata è proporzionale alla memoria richiesta.
+È fondamentale essere consapevoli di tali caratteristiche del servizio, così da prendere contromisure quanto più efficiaci possibili.
 
-CPU time e memoria. Gestione degli errori (status 137 OOM).
+Prima di tutto, si procede a misurare il tempo di esecuzione e la memoria richiesta da ogni analisi così da avere dei dati ottenuti da misurazioni su cui lavorare. Nell'immagine Docker precedentemente realizzata, si va ad eseguire il processo di analisi attraverso \texttt{/usr/bin/time}, da non confondere con il comando \texttt{time} generalmente integrato nella shell - sono distinguibili ed elencabili eseguendo il comando \texttt{type -a time}. L'eseguibile GNU, con il flag \texttt{-v}, permette di misurare sia il tempo di esecuzione che la memoria totale richiesta, consentendoci di eseguire delle stime. L'output verrà così salvato su un file testuale per poi essere analizzato, traendone più informazioni dai dati ottenuti.
 
-\begin{figure}[H]
+Successivamente, eseguiamo il container così modificato su un sample set composto da 40 eseguibili scelti casualmente da VirusTotal, estraendo output e misurazioni. Infine, raccogliamo i dati in un grafico (figg. \ref{fig:static_analysis_exec_cpu_time} e \ref{fig:static_analysis_exec_memory}) per visualizzare il tempo e la memoria, tracciando una linea per rappresentare il valore medio. Notiamo come il tempo medio di esecuzione sia di circa 71 secondi, di gran lunga inferiore al limite di 15 minuti, ossia 900 secondi, per invocazione. Tuttavia, seppur non particolarmente grave, abbiamo appena citato come la potenza computazionale attesa sull'ambiente Lambda sia proporzionale alla memoria massima stabilita come allocabile e comunque inferiore a un ambiente di esecuzione locale riservato solo a questo scopo, per cui è da usare tali stime solo come un punto di riferimento vago, e non sottovalutare casi in cui questo possa aumentare fino a superare il timeout.
+Proprio per ciò, viene imposto un limite già all'interno del container di esecuzione a 13 minuti per l'analisi, usando il comando \texttt{timeout} della shell, così da avere il tempo per permettere una situazione di \emph{graceful exit} e portare sempre a un output, che in questo caso conterrà il flag di successo a \texttt{false}, assieme al campo \texttt{"error"} valorizzato.
+
+Per quanto concerne l'utilizzo di memoria, ci si attesta attorno ai 500MB circa di consumo, seppur non segua affatto una distribuzione normale, visto come ci siano sample che richiedano molta più memoria e altri molta meno, quasi nessuno quanto la media. Anche per questa casistica bisogna tenere conto dei casi di fallimento e prevedere una \emph{graceful exit}. Siccome si è visto che la quasi totalità dell'uso è dovuto dall'esecuzione di \texttt{capa}, si è voluto osservare il suo comportamento in caso di ragggiungimento del limite di memoria disponibile. Perciò, sfruttando il flag \texttt{--memory} di Docker run, si è impostato un limite molto basso e si osservano i risultati. Si è subito rilevato come ciò comportava un crash del tool specifico con exit code 137, associato proprio alla condizione di OOM (Out-Of-Memory). Il flusso di esecuzione però poteva continuare l'esecuzione, a patto di gestire l'errore, dovuto dal fatto che all'inizio dello script di analisi è stato impostato il flag \texttt{set -e} che comporta un'uscita automatica appena un comando dovesse restituire un exit code non-zero. La soluzione adottata è quella di gestire l'errore nello script chiamante, a livello più alto, quindi interrompendo l'analisi ma dando in output l'errore in maniera analoga a quanto indicato per il precedente caso del timeout.
+
+Questa gestione degli errori porta il vantaggio di avere sempre in output un JSON valido, sempre presente e in grado di fornire un'indicazione dell'errore al processo invocante (nel caso finale sarà la Threat Intelligence prQuesta gestione degli errori porta il vantaggio di avere sempre in output un JSON valido, sempre presente e in grado di fornire un'indicazione dell'errore al processo invocante (nel caso finale sarà la Threat Intelligence presumibilmente).
+
+\begin{figure}[htbp]
      \begin{subfigure}[b]{0.5\textwidth}
          \centering
          \includegraphics[width=\textwidth]{assets/static_analysis_exec_cpu_time.png}
@@ -811,18 +819,43 @@ CPU time e memoria. Gestione degli errori (status 137 OOM).
          \caption{Memoria}
          \label{fig:static_analysis_exec_memory}
      \end{subfigure}
-     \label{fig_static_analysis_exec_stats}
      \caption{Uso delle risorse eseguendo analisi statica su malware reali presi a campione}
 \end{figure}
 
-6MB / 256KB in base a sync/async invocation.
+Non si è ritenuto necessario procedere con l'upload dei risultati in un bucket S3, nè é ragionevole concedere alla Lambda di analisi il ruolo di contattare il sistema di reporting, che sia l'API della Threat Intelligence o un mock temporaneo, per i motivi di sicurezza precedentemente elencati. L'unica soluzione restante è quella di inviare il risultato come payload alla Lambda responsabile di quest'ultimo step. Tuttavia, AWS impone certi limiti per questa operazione: in caso di invocazione asincrona non può superare i 256KB, aumentabile fino a 6MB andando a usare l'invocazione sincrona. Quest'ultima ha lo svantaggio di addebitare il proprio tempo di esecuzione anche alla Lambda chiamante, ma non essendo un'operazione più lunga di pochissimi secondi, è un compromesso che si è disposti ad accettare.
 
-\begin{figure}[H]
+Presa conoscienza di tale limite aggiuntivo, si procede ad effettuare una misurazione della dimensione in byte del JSON di output, già minimizzato e non formattato. Siccome è subito intuibile come questo possa essere troppo spesso oltre questa dimensione, si implementa una strategia per ridurne la dimensione.
+Una prima idea poteva essere l'uso di una struttura \emph{"dizionari di liste"} al posto della più tradizionale \emph{"dizionari di liste"} comunemente adottata. Tuttavia, è stata scartata perché, seppur sarebbe andata a ridurre in maniera sensibile alcune strutture, come nel caso di liste con all'interno una lunga serie di dizionari, comportando l'inutile ripetizione delle stringhe delle chiavi dei dizionari interni, avrebbe comportato un'eccessiva trasformazione e molta meno flessibilità di modifica del formato o l'aggiunta/rimozioni di alcune sue parti.
+
+La soluzione realmente adottata è stata usare \texttt{gzip}, un comune strumento di compressione che usa l'algoritmo \emph{DEFLATE}, usato con il massimo livello di aggressività,
+per ridurre in maniera sostanziale lo spazio occupato dal JSON,
+sfruttando le sue proprietà come l'essere un file testuale, avere spesso ripetizioni come nel caso delle chiavi dei dizionari e altre caratteristiche che ne favoriscono la comprimibilità.
+Infine è necessario svolgere un ulteriore passaggio, visto che il payload delle Lambda non può essere uno stream di byte ma è richiesto che sia un oggetto JSON valido, quindi contenente testo. 
+Viene preso il payload in byte ottenuto come risultato della compressione, e trasformato in testo adottando la codifica \emph{Base64} che però incrementa la dimensione di circa il 33\%, incluso in un JSON minimale avente solo la chiave \texttt{"s"} con all'interno questa codifica.
+
+Dopo aver implementato questa strategia, è stata eseguita una misurazione paragonando la dimensione originale del JSON originale, del JSON codificato come appena illustrato e il livello dei 6MB come limite di ciò che è possibile inviare (fig. \ref{fig:static_analysis_results_size}). Si nota immediatamente come la dimensione della linea della versione codificata sia notevolmente inferiore a quella del file originale, abbattendo le probabilità di andare oltre il limite.
+Siccome improbabile non significa impossibile, è stato d'obbligo prevedere una graceful exit anche in tale evenienza.
+
+\begin{figure}[htbp]
     \centering
     \includegraphics[width=0.6\textwidth]{assets/static_analysis_results_size.png}
     \caption{Dimensione del file di output originale e post-compressione gzip + base64}
     \label{fig:static_analysis_results_size}
 \end{figure}
+
+Per riassumere tutti i casi di errore evidenziati,
+è stata definita e documentata una lista chiara dei codici di errore che possono verificarsi, ossia:
+\begin{itemize}
+    \item \texttt{TIMEOUT} per i casi di timeout, riconoscibili dall'exit code del comando timeout uguale a 124
+    \item \texttt{MEMORY\_LIMIT\_EXCEEDED} attribuito all'exit code 137 (OOM) in caso di superamento del limite di memoria
+    \item \texttt{DOWNLOAD\_FAILED} se nello script che accetta un URL come parametro e non direttamente, la richiesta HTTP è fallita sia per problemi di connessione che di status code della risposta non 2xx
+    \item \texttt{CAPA\_CRASH\_UNKNOWN} assegnato al crash di capa, strumento più delicato di tutto il processo, diverso da motivazioni già precedentemente gestite
+    \item \texttt{JSON\_SIZE\_EXCEEDED} nei casi di un output JSON riuscito con successo ma eccessivamente grande da superare i limiti di payload di invocazione delle Lambda
+    \item \texttt{UNKNOWN\_ERROR} paragonabile a una risposta HTTP 500 Internal Server Error di un webserver, dove non è ben chiara la causa del crash ed è bene controllare i log
+    \item \texttt{FATAL\_SCRIPT\_CRASH} nei casi più estremi in cui lo script di analisi non riesce a generare nè un successo nè un errore nel JSON di output, allora l'ultimo attore rimasto presente è l'handler Python della Lambda, che procederà ad emettere questo errore; si presuppone non succeda mai ma è conservato come ultimo tentativo di emettere un errore, in caso si verifichino situazioni molto più particolari non previste
+\end{itemize}
+
+La verifica che questi siano gli unici e i soli codici di errore restituibili in output è data dal sistema usato per creare il JSON di errore: uno script Python che da argomento da terminale prende in input l'errore che si vorrebbe restituire, controlla che sia tra quelli consentiti o ne restituisce uno di default segnalando l'avvenimento fuori dal protocollo definito nei log, per poi creare il JSON con il formato standard solo in caso non sia già stato dato un altro errore per la stessa invocazione. Quest'ultimo può essere rappresentato dal caso in cui la propagazione dell'exit code fallisca e la seconda volta venga richiesta l'emissione di un errore meno specifico, che lo script Python andrà a rifiutare.
 
 \subsection{Costi del servizio}
 Le prossime analisi si baseranno sui seguenti parametri di riferimento forniti sulla base dello storico aziendale e delle aspettative di uso reale del servizio:
@@ -871,7 +904,9 @@ Per la gestione del repository,e in particolare i suoi branch, si seguono rigida
 Infine, per un maggiore controllo, il merge dai branch secondari (\texttt{feature/} e \texttt{refactor}) vengono fatti attraverso l'uso di \emph{Merge Request} (o \emph{Pull Request}, a seconda che si usa la nomenclatura di GitLab o di GitHub).
 In questo modo, è possibile interagire sul merge commentando o richiedendo revisioni di co-workers.
 
-Non siamo ancora giunti al punto di rilasciare il progetto e attribuirgli una versione, ma in tal caso è ideale usare convenzioni standard come \emph{Semantic Versioning}, e usare tale stringa come \textbf{tag} sul repository Git.
+Non siamo ancora giunti al punto di rilasciare il progetto e attribuirgli una versione, ma in tal caso è ideale usare convenzioni standard come \emph{Semantic Versioning}
+\footnote{\url{https://semver.org/lang/it/}}
+, e usare tale stringa come \textbf{tag} sul repository Git.
 
 \begin{figure}[h!]
     \centering
@@ -881,3 +916,4 @@ Non siamo ancora giunti al punto di rilasciare il progetto e attribuirgli una ve
 \end{figure}
 
 \section{CI/CD Pipeline}
+Solo su develop = branch protetti
