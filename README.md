@@ -33,6 +33,21 @@ the foundation of a real project and internal tool in the company business.
 
 However, you will be able to find **a lot of diagrams** in the PDF document and here in the [assets/](assets/) folder.
 
+## PDF authenticity verification
+You can download both the thesis PDF and the detached signature (`.sig` file), which can be verified using GPG.
+It **must** be made with the same key I use for commits. In case I haven't changed it in the meanwhile, it should be [this one](https://github.com/simonesestito.gpg).
+
+<details>
+<summary>GPG key import and verification</summary>
+
+```sh
+git clone --depth=1 https://github.com/simonesestito/bachelor-thesis.git
+cd bachelor-thesis/
+curl -sSL https://github.com/simonesestito.gpg | gpg --import -
+gpg --verify thesis.pdf.sig
+```
+</details>
+
 ## LICENSE
 
 <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-sa/4.0/88x31.png" /></a><br />This work is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/">Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License</a>.
