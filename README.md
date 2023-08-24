@@ -1,4 +1,4 @@
-# THESIS-REPO-TITLE
+# Automation of Static and Dynamic Malware Analysis
 
 **Bachelor's Degree Thesis in Computer Science**
 <a href="https://www.overleaf.com/read/xdjkjrjcqyym">
@@ -24,7 +24,7 @@ in Computer Science at "La Sapienza", University of Rome.
 
 The thesis is written in Italian.
 
-Available also on [Overleaf](https://www.overleaf.com/read/xdjkjrjcqyym).
+Also available on [Overleaf](https://www.overleaf.com/read/xdjkjrjcqyym).
 
 **Note:**
 Unfortunately the source code cannot be disclosed
