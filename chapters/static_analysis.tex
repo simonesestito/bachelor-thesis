@@ -863,34 +863,80 @@ Le prossime analisi si baseranno sui seguenti parametri di riferimento forniti s
     \centering
     \begin{tabular}{|l|l|}
         \hline
-        \textbf{Parametro}             & \textbf{Valore (al mese)}       \\ \hline
-        Numero di sample da analizzare & 1.000.000                       \\
+        \textbf{Parametro}             & \textbf{Valore}                 \\ \hline
+        Numero di sample da analizzare & 100.000 al mese                 \\
         Memoria media richiesta        & 512 MB (limite massimo: 1024MB) \\
         Tempi medio di esecuzione      & 70 secondi                      \\ \hline
     \end{tabular}
 \end{table}
 
-Inoltre, si sottolinea come i costi dei servizi AWS subiscano inflessioni nel tempo, per cui questa stima è sufficientemente valida al momento della scrittura di questo documento.
+Inoltre, si sottolinea come i costi dei servizi AWS subiscano inflessioni nel tempo, per cui questa stima è sufficientemente valida al momento della scrittura di questa relazione.
+Per i calcoli viene usato il calcolatore ufficiale Amazon\footnote{\url{https://calculator.aws}}
+inserendo come posizione Milano (eu-south-1) per ragioni di GDPR, policy aziendali e distanza dal server che effettuerà l'upload dei sample. In merito al numero di GET stimate al mese, si considerano, per ogni sample, 1 GET per la lettura nell'analisi e il 20\% delle volte una GET su Internet per il download del file dall'analista.
+Viene escluso dai calcoli, l'uso del Free Tier, in quanto questo potrebbe essere utilizzato per ulteriori progetti sullo stesso account.
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|l|l|}
+\hline
+Dimensione media di un sample          & 1 MB                \\
+Richieste PUT al mese                  & 100.000             \\
+Richieste GET al mese                  & 120.000             \\
+Numero di sample dopo 3 mesi           & 300.000             \\
+Spazio occupato dai sample dopo 3 mesi & 300.000 MB $\approx$ 280 GB \\ \hline
+Costo stimato mensile                  & € 10,00             \\ \hline
+\end{tabular}
+\label{tab:aws_s3_costs}
+\caption{Parametri per il costo di un bucket S3}
+\end{table}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|ll|}
+\hline
+\multicolumn{2}{|c|}{\textbf{Lambda trigger post-upload}}                               \\ \hline
+\multicolumn{1}{|l|}{Durata di esecuzione media}     & 2 secondi                        \\
+\multicolumn{1}{|l|}{Memoria allocata}               & 256 MB                           \\
+\multicolumn{1}{|l|}{Costo stimato mensile}          & € 1,00                           \\ \hline
+\multicolumn{2}{|c|}{\textbf{Lambda analisi con strumenti}}                             \\ \hline
+\multicolumn{1}{|l|}{Durata di esecuzione media}     & 70 secondi, limitato a 14 minuti \\
+\multicolumn{1}{|l|}{Memoria allocata}               & 1024 MB                          \\
+\multicolumn{1}{|l|}{Costo stimato mensile}          & € 124,00                         \\ \hline
+\multicolumn{2}{|c|}{\textbf{Lambda reporting}}                                         \\ \hline
+\multicolumn{1}{|l|}{Durata di esecuzione media}     & 5 secondi                        \\
+\multicolumn{1}{|l|}{Memoria allocata}               & 512 MB                           \\
+\multicolumn{1}{|l|}{Costo stimato mensile}          & € 5,00                           \\ \hline
+\multicolumn{1}{|l|}{Invocazioni di tutte le Lambda} & 100.000 al mese per Lambda       \\ \hline
+\end{tabular}
+\label{tab:aws_lambdas_costs}
+\caption{Parametri per il costo delle varie Lambda}
+\end{table}
 
 \begin{table}[H]
     \centering
-    \begin{tabular}{|l|l|}
+    \begin{tabular}{|l|r|}
         \hline
-        \textbf{Servizio}         & \textbf{Costo stimato (al mese)} \\ \hline
-        S3 Bucket (standard tier) &                                  \\
-        Lambda start              &                                  \\
-        Lambda di analisi         &                                  \\
-        Lambda di fine rapporto   &                                  \\ \hline
-        Costo stimato totale      & € 750,00                         \\ \hline
+        \textbf{Servizio}            & \textbf{Stima} \\ \hline
+        S3 Bucket (standard tier)    & € 10,00        \\
+        Lambda start                 & € 1,00         \\
+        Lambda di analisi            & € 124,00       \\
+        Lambda di fine rapporto      & € 5,00         \\ \hline
+        Costo stimato totale al mese & € 140,00       \\ \hline
     \end{tabular}
+    \label{tab:aws_summary_costs}
+    \caption{Riepilogo dei costi stimati per i singoli servizi}
 \end{table}
+
+Viste le spese per task analoghi già sostenute dall'azienda, è ritenuto un valido preventivo, anche in ottica di futuro reale utilizzo del progetto all'interno del più vasto sistema.
+
+Sono state tuttavia valutate anche altre opzioni, come l'uso di una o più istanze EC2 pre-allocate, con posto di fronte un load balancer, nel tentativo di ridurre i costi. Tuttavia, non è stato efficace ma controproducente, andando anche a perdere le qualità delle Lambda quali l'auto-scaling e il costo nullo in caso di non utilizzo.
 
 \section{Versioning}
 Per il versioning, è stato creato un repository Git sul server GitLab aziendale.
 
 Per ogni modifica viene creato un commit, come è standard.
 
-Tuttavia, ci sono alcuni aspetti dell'organizzazione che ha senso sottolineare.
+Tuttavia, ci sono alcuni aspetti dell'organizzazione che è rilevante sottolineare.
 
 \subsection{Branch Naming Convention}
 Per la gestione del repository,e in particolare i suoi branch, si seguono rigidamente queste convenzioni:
