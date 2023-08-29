@@ -931,14 +931,29 @@ Viste le spese per task analoghi già sostenute dall'azienda, è ritenuto un val
 
 Sono state tuttavia valutate anche altre opzioni, come l'uso di una o più istanze EC2 pre-allocate, con posto di fronte un load balancer, nel tentativo di ridurre i costi. Tuttavia, non è stato efficace ma controproducente, andando anche a perdere le qualità delle Lambda quali l'auto-scaling e il costo nullo in caso di non utilizzo.
 
-\section{Versioning}
-Per il versioning, è stato creato un repository Git sul server GitLab aziendale.
+\section{Versioning del software}
+Al fine di mantenere in maniera ordinata il software realizzato e la relativa documentazione, è stato creato un nuovo repository Git all'interno del server GitLab aziendale.
+Questo è stato unicamente dedicato al progetto.
+Come da utilizzo standard di Git, per ogni modifica viene realizzato un commit. Si adottano tuttavia una serie di convenzioni atte a tenere alta la qualità e la mantenibilità del codice in questione:
+\begin{itemize}
+    \item I commit devono essere atomici, ossia contenere una ed una sola modifica logica realizzata,
+    per migliorare la comprensione quando in futuro vengono riletti e permettere un eventuale revert efficace, se non fare cherry-picking di un commit da un branch all'altro
+    \item I messaggi dei commit devono essere quanto più descrittivi possibili, evitando in maniera assoluta descrizioni vuote o non significative, come \emph{"Update"} o \emph{"Fix stuff"}
+    \item Idealmente, i messaggi dovrebbero iniziare con un verbo all'infinito, indicando l'azione svolta
+    \item L'autore deve essere ben chiaro, inserendo un Co-Author se necessario e potenzialmente adottando sistemi di firma del commit con una chiave personale GPG, per essere certi di attribuire la giusta paternità
+    \item Il branch \texttt{main} (o \texttt{master}) è protetto: non è possibile eseguire force push, limitando operazioni potenzialmente distruttive sull'intera codebase
+    \item I branch seguono nomi standard, illustrati nella sez. \ref{chap:git_branch_naming_convention}
+\end{itemize}
 
-Per ogni modifica viene creato un commit, come è standard.
-
-Tuttavia, ci sono alcuni aspetti dell'organizzazione che è rilevante sottolineare.
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=\textwidth]{assets/git_log_history.png}
+    \caption{Esempio di history Git con più branch}
+    \label{fig:git_log_history}
+\end{figure}
 
 \subsection{Branch Naming Convention}
+\label{chap:git_branch_naming_convention}
 Per la gestione del repository,e in particolare i suoi branch, si seguono rigidamente queste convenzioni:
 \begin{itemize}
     \item \texttt{main} è il branch principale dove deve essere presente solo codice finito e considerabile stabile a tutti gli effetti;
