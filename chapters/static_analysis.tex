@@ -1,18 +1,18 @@
 \chapter{Analisi statica}
 Il primo passo di questo processo di analisi riguarda in primo luogo un approccio di tipo statico.
 
-Questo tipo di analisi è usato per fare una prima esaminazione senza eseguirli su un sistema.
+Questo tipo di analisi è usato per fare una prima esaminazione di file di vario tipo, senza però eseguirli su un sistema.
 Per arrivare a tali risultati, si ispeziona il codice del file del malware, alla ricerca di varie caratteristiche, in base a quale strumento stiamo usando e al suo scopo.
-Possiamo andare alla ricerca, più o meno approfondita, di chiamate di sistema particolari, indizi di offuscamento o crittografia anche tramite un'analisi dell'entropia di alcune sezioni del file, nonché più direttamente degli IoC già noti.
+Possiamo andare alla ricerca, più o meno approfondita, di chiamate di sistema particolari, indizi di offuscamento o crittografia tramite un'analisi dell'entropia di alcune sezioni del file, nonché più direttamente degli IoC già noti.
 Si possono usare numerose tecniche, tra cui:
 
 \begin{itemize}
-    \item \textbf{Disassemblaggio o decompilazione} al fine di andare ad esaminare il codice più o meno ad alto livello del sorgente originale dell'eseguibile, anche se spesso questa pratica resta difficoltosa per tutte le ragioni dietro la reverse-engineering, con particolare attenzione degli autori del malware di rendere tecniche come questa il più difficili possibile
-    \item \textbf{Analisi delle stringhe} per identificare IoC particolari come URL noti, indirizzi IP, o anche semplicemente nomi di chiavi di registro o file che normalmente non dovrebbe andare a toccare in un normale funzionamento
+    \item \textbf{Disassemblaggio o decompilazione} al fine di andare ad esaminare il codice, più o meno ad alto livello, del sorgente originale dell'eseguibile, anche se spesso questa pratica resta difficoltosa per tutte le ragioni dietro la reverse-engineering, con particolare attenzione degli autori del malware di rendere tecniche come questa il più difficili possibile da applicare;
+    \item \textbf{Analisi delle stringhe} per identificare IoC particolari come URL noti, indirizzi IP, o anche semplicemente nomi di chiavi di registro o file con cui normalmente non si dovrebbe interagire in un funzionamento classico;
     \item \textbf{Estrazione dei payload} integrati all'interno del file, come exploit nascosti / crittografati o anche lo stesso codice del vero eseguibile, come nel caso dei file pacchettizzati, che tratteremo nelle successive sezioni
 \end{itemize}
 
-Infine, non necessariamente si deve trattare di un eseguibile: può anche essere analizzato un documento Office o un file PDF, anch'essi noti per essere potenziali vettori di attacco, includendo delle macro o del codice eseguibile al proprio interno.
+Infine, non necessariamente si deve trattare di un eseguibile: può anche essere analizzato un documento Office o un file PDF, anch'essi noti per essere potenziali vettori di attacco, includendo delle macro o del codice al proprio interno.
 
 \section{Struttura binari}
 \label{chap:static_analysis_binary_structure}
@@ -30,28 +30,27 @@ Proprio successivamente al Linking, abbiamo un singolo file binario, e questo av
 Un attaccante potrebbe aumentare il più possibile il numero di librerie linkate staticamente, così da nasconderne il proprio utilizzo.
 Un'altra tecnica molto usata in vari contesti è lo \emph{stripping}, eliminando dalla symbol table tutti i riferimenti alle funzioni esportate nel file stesso. Possiamo vedere un esempio di questo fenomeno nel caso dei file ELF su Linux in figura \ref{fig:elf_symtab}.
 
-Di seguito, vediamo le principali peculiarità a seconda del sistema operativo a cui si riferiamo.
+Di seguito, vediamo le principali peculiarità a seconda del sistema operativo a cui ci riferiamo.
 
 \subsection{ELF}
 Il formato ELF \emph{(Executable and Linkable Format)} è proprio dei sistemi Linux, ma non solo, infatti è usato anche in vari microcontrollori, o console da gioco come la Nintendo Wii e la PlayStation \cite{forensic_friday_execs}.
-Viene usato per file eseguibili, o anche file object comunemente indicati con l'estensione \texttt{.o}, shared libraries aventi estensione \texttt{.so} o core dumps.
+Viene usato per file eseguibili, file object comunemente indicati con l'estensione \texttt{.o}, shared libraries aventi estensione \texttt{.so} o core dumps.
 
-Si compone di un header, descritto completamente nel file \texttt{sys/elf.h} e visibile in dettaglio in figura \ref{fig:elf_header}, contenente varie informazioni tra cui le più importanti come il tipo di file (\texttt{e\_type}), se eseguibile o uno tra quelli citati in precedenza,
-il magic number con cui possiamo riconoscere che si tratta di un ELF,
+Si compone di un header, descritto completamente nel file \texttt{sys/elf.h} e visibile in dettaglio in figura \ref{fig:elf_header}, contenente varie informazioni tra cui: il tipo di file (\texttt{e\_type}), il magic number con cui possiamo riconoscere che si tratta di un ELF,
 l'architettura per la quale è stato compilato (\texttt{e\_machine})
 e l'indirizzo di memoria virtuale, indicato come un offset all'interno del file, che il sistema operativo dovrà eseguire per lasciare il controllo al nuovo processo nato (\texttt{e\_entry}).
 
-\begin{figure}[!ht]
+\begin{figure}[htbp]
     \centering
     \includegraphics[width=0.6\textwidth]{assets/elf_header.png}
     \caption{Header di un file ELF, letto con readelf}
     \label{fig:elf_header}
 \end{figure}
 
-Ma al suo interno troviamo anche le sezioni, tra cui le più rilevanti, con le possibili misure di sicurezza che se mancano potrebbero essere un indicatore che dovrebbe essere portato all'attenzione: \cite{forensic_friday_execs}
+Ma al suo interno troviamo anche le sezioni. Di seguito sono elencate le più rilevanti, con associati i possibili indicatori a cui prestare attenzione: \cite{forensic_friday_execs}
 \begin{itemize}
     \item \texttt{.text} contiene il codice principale del programma, e rappresenta il focus principale di ogni analisi sul file binario; ha il tipo \texttt{SHT\_PROGBITS} affinché sia eseguibile ma non scrivibile, protezione assolutamente voluta in un programma standard
-    \item \texttt{.data} e \texttt{.rodata} contengono i dati del programma, come le variabili o le costanti, a seconda che sia una sezione scrivibile o meno - ad esempio, rilevare un valore di entropia molto alta in questa sezione può essere indice di uso di compressione o crittografia, e va valutato caso per caso se è un comportamento che ci aspettavamo o può essere indicatore di qualcosa di malevolo, proprio per la sua volontà di rendere sempre più difficile l'analisi senza una esecuzione del programma stesso
+    \item \texttt{.data} e \texttt{.rodata} contengono i dati del programma, come le variabili o le costanti, a seconda che sia una sezione scrivibile o meno - rilevare un valore di entropia molto alta in questa sezione può essere indice di uso di compressione o crittografia, e va valutato caso per caso se è un comportamento che ci aspetteremmo o figura come indicatore di qualcosa di malevolo, proprio perché manifesta volontà dell'autore di rendere sempre più difficile l'analisi statica. Anche programmi coperti da copyright possono adottare misure di offuscamento, ma non per questo sono da considerarsi malevoli
     \item \texttt{.init} e \texttt{.fini} contengono le procedure di inizializzazione e finalizzazione da eseguire prima del main o prima della terminazione del processo a seguito della fine del normale flusso di esecuzione
 \end{itemize}
 
@@ -77,12 +76,14 @@ PE sta per \textbf{Portable Executable} ed è il formato usato nei sistemi Micro
 
 Viene usato per vari tipi di file, tra cui eseguibili, DLL (Dynamic Link Libraries) e object file.
 
-Anch'esso ha il proprio magic number ai fini di essere identificato correttamente, ed è composto da più header, dove possiamo notare tutta la sua evoluzione come formato. Inizialmente troviamo header specifici di MS-DOS, e successivamente header più caratteristici delle nuove versioni dei PE, includendo sia informazioni di base comuni agli ELF, come il numero di sezioni, di simboli e l'architettura, ma anche la firma digitale dell'immagine del programma per proteggersi da tampering e verificare che l'eseguibile sia realmente proveniente dalla corretta azienda, a meno di leak delle chiavi privati usate per la firma stessa.
+Anch'esso ha il proprio magic number ai fini di essere identificato correttamente, ed è composto da più header, dove possiamo notare tutta la sua evoluzione storica come formato. Inizialmente troviamo header specifici di MS-DOS, e successivamente altri più caratteristici delle nuove versioni dei PE, includendo sia informazioni di base comuni agli ELF, come il numero di sezioni, di simboli e l'architettura, ma anche la firma digitale dell'immagine del programma per proteggersi da tampering e verificare che l'eseguibile sia realmente proveniente dalla corretta azienda, a meno di leak delle chiavi privati usate per la firma stessa.
 \footnote{Maggiori dettagli sono disponibili alla pagina \url{https://learn.microsoft.com/en-us/windows/win32/debug/pe-format}}
+Quest'ultima caratteristica può semplificare il lavoro di un analista, comunicando che si tratta di un file originale rilasciato da esattamente una specifica azienda nota. Non deve tuttavia essere una garanzia al 100\%, vista la possibilità di leak delle chiavi di firma, seppur remota.
+In alcuni ambienti con politica zero-trust, può essere ritenuto idoneo vietare l'esecuzione di file non firmati o di produttori inaspettati.
 
 \section{Capa: capabilities}
 \label{chap:capa}
-Per i test che vedremo in questa sezione, sono stati scaricati \textbf{40 sample} di malware reali da VirusTotal casualmente, e nelle varie fasi di miglioramento ed evoluzione, soprattutto in merito all'analisi delle capabilities, sono stati fatte numerose prove usando come campioni proprio questi sample.
+Per i test che vedremo in questa sezione e nelle successive, sono stati scaricati \textbf{40 sample} di malware reali da VirusTotal casualmente, e nelle varie fasi di miglioramento ed evoluzione, soprattutto in merito all'analisi delle capabilities, sono stati fatte numerose prove usando come campioni proprio questi sample.
 
 Per \emph{capabilities} intendiamo le funzionalità che va a usare il programma, ossia ciò che è capace di svolgere durante la propria esecuzione. Esempi di capabilities possono essere la connessione a un server remoto, la modifica di chiavi di registro, o la creazione di un processo figlio, solo per citarne qualcuna.
 
@@ -100,18 +101,18 @@ tool open-source creato da Mandiant, una delle aziende leader del settore e ora 
 che permette di andare ad individuare delle capabilities all'interno di un file eseguibile
 sfruttando delle regole aventi un proprio formato.
 Funziona andando prima ad estrarre delle \emph{features} come le stringhe incluse, codice disassemblato, control flow o file importati.
-Poi vengono lanciate le regole su queste features al fine di trarne un'implicazione logica e ottenere informazioni valide a fronte di un match con una o più regole capa.
+Poi vengono lanciate le regole su queste features al fine di trarne una conclusione logica e ottenere informazioni valide a fronte di un match con una o più regole capa.
 
 Si è rilevata la \emph{scelta ottimale} per il progetto per la sua natura open-source, per la grande azienda che è dietro la sua realizzazione, ma soprattutto per la potenza espressiva delle sue regole.
-Possiamo scrivere regole in un file di testo in formato YAML, seguendo la semplice struttura richiesta da capa, per aggiungere in futuro ulteriori regole, sia internamente che estratte da altri contributori nei propri repository. Infine, è possibile anche organizzarli per tag, così decidendo volta per volta quali specifiche regole eseguire, garantendo massima flessibilità.
+Possono essere scritte in un file di testo in formato YAML, seguendo la semplice struttura richiesta da capa, ed essere in futuro aggiunte nello strumento realizzato, sia preparate internamente che estratte da altri contributori in repository pubblici. Infine, è possibile anche organizzarle per tag (chiamati anche \emph{namespace}), così decidendo volta per volta quali specifiche regole eseguire, garantendo massima flessibilità.
 
-Il processo di feature extraction si basa in gran parte sull'header che abbiamo appena menzionato nella sezione \ref{chap:static_analysis_binary_structure}, comprese informazioni sulle funzioni esportate, tabella dei simboli (SymTab) e sezioni. Inoltre, il processo di disassemblaggio è molto complesso perché punta sia ad individuare features quali API calls, istruzioni speciali o riferimenti di stringhe/numeri poste in altre sezioni dell'eseguibile (come \texttt{.rodata} per le costanti), ma anche a ricostruire il control-flow minimizzando falsi positivi in caso di dead code o per distinguere tra funzioni e altri \emph{scope}. Alla base di questo step, c'è \texttt{ViviSect Feature Extractor}. \cite{capa_mandiant_blogpost}
+Il processo di feature extraction si basa in gran parte sull'header che abbiamo appena menzionato nella sezione \ref{chap:static_analysis_binary_structure}, comprese informazioni sulle funzioni esportate, tabella dei simboli (SymTab) e sezioni. Inoltre, il processo di disassemblaggio è molto complesso perché punta sia ad individuare features quali API calls, istruzioni speciali o riferimenti di stringhe/numeri poste in altre sezioni dell'eseguibile (come \texttt{.rodata} per le costanti), ma anche a ricostruire il control-flow minimizzando falsi positivi in caso di dead code o per distinguere tra funzioni e altri scope. Alla base di questo step, c'è \texttt{ViviSect Feature Extractor}. \cite{capa_mandiant_blogpost}
 
 Una volta ottenute tutte le features di interesse, si procede a fare il match con le regole.
 Una regola capa è una combinazione logica strutturata di match di varie features più di basso livello, per giungere alla conclusione di presenza o assenza di una determinata capability all'interno del software in analisi, espresse sotto forma di file \texttt{YAML}.
 
 Nelle regole, può venir inoltre specificata la tecnica e quindi la tattica, secondo il MITRE ATT\&CK Framework (sez. \ref{chap:mitre_attack}), come visibile nell'output del comando (fig. \ref{fig:capa_example_invocation}).
-Questa rappresenta un grande vantaggio per l'integrazione con altri strumenti di Threat Intelligence, per le stesse ragioni favorevoli dell'adozione del framework.
+Questa rappresenta un grande vantaggio per l'integrazione con altri strumenti di Threat Intelligence, per le stesse ragioni favorevoli dell'adozione del framework, già discusse.
 
 \begin{figure}[!htb]
     \centering
@@ -120,111 +121,7 @@ Questa rappresenta un grande vantaggio per l'integrazione con altri strumenti di
     \label{fig:capa_rule_socket_tcp}
 \end{figure}
 
-Tuttavia, non tutti gli eseguibili sono supportati da capa, proprio per i motivi precedentemente elencati riguardanti i file offuscati o pacchettizzati. A questo scopo, sono presenti all'interno del set standard di capa, delle regole
-(sotto il namespace \texttt{internal/limitation/file} \footnote{\url{https://github.com/mandiant/capa-rules/tree/master/internal/limitation/file}})
-che se hanno un match col file in analisi, capa si arresterà non ritenendo più affidabili i propri risultati.
-Questo, come vedremo nel prossimo paragrafo, ci costerà troppo tempo e andrà risolto in un altro modo, individuato in \ref{chap:static_custom_file_detector}.
-
-\subsection{Analisi dell'uso delle risorse}
-Vogliamo analizzare l'uso di risorse da parte di capa con una varietà di file diversi, ossia i 40 sample precedentemente citati da VirusTotal, in termini di spazio e tempo, provando a cercare delle correlazioni con altri dati a nostra disposizione, al fine di eventualmente poter eseguire delle ottimizzazioni.
-
-Bisogna ricordare infatti che il ben più ampio sistema con cui questo progetto si andrà in futuro a interfacciare lavora diverse migliaia di sample ogni mese, per cui è fondamentale ridurre gli sprechi.
-
-All'interno di una macchina virtuale, è stato installato il tool \texttt{capa} insieme ai sample da mettere sotto esame.
-Prima di fare ogni tipo di studio, abbiamo bisogno di estrarre dei dati, ottenibili con uno script Python che legge lo stderr del comando, nonché il suo tempo di esecuzione.
-
-Uno dei dati più significativi è il numero di funzioni o blocchi che devono essere analizzate dal feature extractor.
-Usando matplotlib, andiamo a validare questa supposizione o confutarla, visualizzando i due elementi in un grafico (fig. \ref{fig:capa_correlation_plot}).
-
-\begin{figure}[!htb]
-    \centering
-    \includegraphics[width=0.6\textwidth]{assets/capa_correlation_plot.png}
-    \caption{Correlazione tra tempo di esecuzione (blu) e numero di funzioni/blocchi (verde), assenza di relazione con la dimensione del file (rosso)}
-    \label{fig:capa_correlation_plot}
-\end{figure}
-
-Siccome su questa metrica non possiamo intervenire in alcun modo, focalizziamoci sull'evitare l'esecuzione di analisi su file che non sono supportati.
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-\subsection{File offuscati}
-\label{chap:static_analysis_obfuscated}
-Per prima cosa è stato notato come il tool restituisse un diverso \emph{exit code} in base alla corretta esecuzione della feature extraction o meno (listing \ref{code:capa_exit_code}). Da ciò, possiamo rilevare quando un file poteva essere scartato a monte o l'esecuzione di capa ha portato a risultati utili per cui le risorse sono state ben spese.
-
-\begin{code}
-\caption{Distinzione tra gli exit code di capa}
-\begin{minted}{bash}
-function test_file_with_capa() {
-    capa "$1" 2>&1 | grep "WARNING:capa: Identified via"
-    echo "Exit code (capa): ${PIPESTATUS[0]}"
-}
-
-$ test_file_with_capa ./executables/visual_basic_file.exe
-WARNING:capa: Identified via rule: (internal) Visual Basic file limitation
-Exit code (capa): 14
-
-$ test_file_with_capa ./executables/standard_pe.exe
-Exit code (capa): 0
-\end{minted}
-\label{code:capa_exit_code}
-\end{code}
-
-Da qui, abbiamo potuto categorizzare i vari sample in gruppi sulla base del tipo di file, che sia standard (\texttt{pe}) o non supportato da capa (\texttt{packed}, \texttt{installer}, ...).
-Creiamo quindi uno script Python che sia in grado di automatizzare questa azione, sia sulla base dell'exit code che dell'output sullo stderr. Otteniamo un JSON come il seguente (estratto per sintesi):
-
-\begin{minted}[samepage]{json}
-{
-  "./b9c32debb4.exe": "installer",
-  "./9f79ea539a.exe": "pe",
-  "./4726c42b25.exe": "visualbasic",
-  "./e49c42d0b1.exe": "pe",
-  .....
-}
-\end{minted}
-
-La distribuzione della tipologia dei file è riassumibile più graficamente nella figura \ref{fig:capa_file_type_split}, dove notiamo come circa la metà dei sample è difficilmente analizzabile con capa per difetti congeniti dell'analisi statica.
-Siccome non possiamo agire direttamente su questo aspetto per eseguire il tool, il prossimo passo sta nel quantificare lo spreco di risorse che si verifica analizzando le capabilities di file che poi porteranno a un fallimento del processo, e se può essere conveniente a livello di trade-off costruire una soluzione per salvaguardare l'uso di risorse saltando del tutto la sua esecuzione (codice \ref{code:static_analysis_capa_count_wasted_time}).
-
-\begin{figure}[!htb]
-    \centering
-    \includegraphics[height=1.8in]{assets/capa_file_type_split.png}
-    \caption{Divisione dei sample per tipologia}
-    \label{fig:capa_file_type_split}
-\end{figure}
-
-\begin{code}
-\caption{Calcolo del tempo sprecato eseguendo capa su file non supportati}
-\begin{minted}{python}
-times = {
-    k: v['elapsed_time']
-    for k, v in times.items() if file_types[k] != 'pe'
-}
-avg_wasted_time = sum(times.values()) / len(times)
-print(f'{avg_wasted_time:.2f} sec. per unsupported file (avg)')
-# 58.77 sec. per unsupported file (avg)
-\end{minted}
-\label{code:static_analysis_capa_count_wasted_time}
-\end{code}
-
-Notiamo che ci mette \textbf{un'eccessiva quantità di tempo} per
-eseguire il match delle regole le quali indicano a capa l'impossibilità a proseguire con una soddisfacente confidence, con una media di quasi \emph{un minuto per file}, che moltiplicato su tanti file diventa una grande quantità di tempo totale che potrebbe essere usato in maniera migliore.
-
-\medskip
-
-Ci basta avere i dati di ciò che stiamo trattando, ad esempio l'output desiderato in questo caso sarà del tipo:
-\begin{minted}[samepage]{json}
-{
-    "capa": {
-        "format": "packed",
-        "arch": "i386",
-        "os": "windows"
-    }
-}
-\end{minted}
-
-Come soluzione, dobbiamo trovare un sistema per riconoscere preventivamente che si tratti di un file che non è possibile analizzare con capa.
-
-\subsection{Scrittura del parser}
+\subsection{Parsing dell'output di capa}
 Capa, al contrario di ciò che vedremo di seguito, è un tool da usare da CLI e offre un output testuale, come in figura \ref{fig:capa_example_invocation}.
 
 Siccome al nostro strumento serve un output più machine-readable da restituire come risultato del processo di analisi, è stato scritto in Python un \textbf{parser} in grado di trasformare quel testo in un JSON.
@@ -236,7 +133,7 @@ Poi, le linee che ci interessano iniziano per \texttt{|}, escluso l'inizio per \
 
 Notiamo come la prima linea di ogni sezione contenga il nome della sezione stessa, fatta eccezione per le informazioni che però sono sempre la prima informazione contenuta, così da stabilire quale sotto-parser usare specifico per quella porzione di testo.
 
-\begin{figure}
+\begin{figure}[htbp]
     \centering
     \includegraphics[width=0.75\textwidth]{assets/capa_out_first_parse.png}
     \caption{Prima trasformazione dell'output di capa}
@@ -290,6 +187,110 @@ In questo modo, si arriva ad un formato JSON machine-readable, che astrae dallo 
 \caption{Esempio sintetico del formato di output successivo al parsing}
 \end{code}
 
+\subsection{Analisi dell'uso delle risorse}
+Vogliamo analizzare l'uso di risorse da parte di capa con una varietà di file diversi, ossia i 40 sample precedentemente citati da VirusTotal, in termini di spazio e tempo, provando a cercare delle correlazioni con altri dati a nostra disposizione, al fine di eventualmente poter eseguire delle ottimizzazioni.
+Bisogna ricordare infatti che il ben più ampio sistema con cui questo progetto si andrà in futuro a interfacciare lavora diverse migliaia di sample ogni mese, per cui è fondamentale ridurre gli sprechi.
+
+All'interno di una macchina virtuale, è stato installato il tool \texttt{capa} insieme ai sample da mettere sotto esame.
+Prima di fare ogni tipo di studio, abbiamo bisogno di estrarre dei dati, ottenibili con uno script Python che legge ed esegue un basilare parsing dei log del comando, tramite il suo standard error, nonché il suo tempo di esecuzione.
+
+Uno dei dati più significativi è il numero di funzioni o blocchi che devono essere analizzate dal feature extractor.
+Usando matplotlib, andiamo a validare questa supposizione o confutarla, visualizzando i due elementi in un grafico (fig. \ref{fig:capa_correlation_plot}).
+
+\begin{figure}[!htb]
+    \centering
+    \includegraphics[width=0.6\textwidth]{assets/capa_correlation_plot.png}
+    \caption{Correlazione tra tempo di esecuzione (blu) e numero di funzioni/blocchi (verde), assenza di relazione con la dimensione del file (rosso)}
+    \label{fig:capa_correlation_plot}
+\end{figure}
+
+Si evince come ci sia correlazione tra il numero di funzioni e il tempo di esecuzione dello strumento, mentre sia pressoché assente tra altre variabili rappresentate in figura.
+Siccome su questa prima metrica non possiamo intervenire in alcun modo, ci si è focalizzati sull'evitare a monte l'analisi con capa di file che non sono supportati.
+Infatti, si è notato come non tutti gli eseguibili sono supportati da capa, proprio per i motivi precedentemente elencati riguardanti i file offuscati o pacchettizzati. A questo scopo sono presenti, all'interno del set standard di capa, delle regole
+(sotto il namespace \texttt{internal/limitation/file} \footnote{\url{https://github.com/mandiant/capa-rules/tree/master/internal/limitation/file}})
+che se presentano un match col file in analisi, capa si arresterà non ritenendo più affidabili i propri risultati.
+
+\subsection{File non supportati}
+\label{chap:static_analysis_obfuscated}
+Per prima cosa è stato notato come il tool restituisse un diverso \emph{exit code} in base alla sua corretta esecuzione o meno (listing \ref{code:capa_exit_code}). Da ciò, possiamo rilevare quando un file poteva essere scartato a monte o l'esecuzione di capa ha portato a risultati utili per cui le risorse sono state ben spese.
+
+\begin{code}
+\begin{minted}{bash}
+function test_file_with_capa() {
+    capa "$1" 2>&1 | grep "WARNING:capa: Identified via"
+    echo "Exit code (capa): ${PIPESTATUS[0]}"
+}
+
+$ test_file_with_capa ./executables/visual_basic_file.exe
+WARNING:capa: Identified via rule: (internal) Visual Basic file limitation
+Exit code (capa): 14
+
+$ test_file_with_capa ./executables/standard_pe.exe
+Exit code (capa): 0
+\end{minted}
+\caption{Distinzione tra gli exit code di capa}
+\label{code:capa_exit_code}
+\end{code}
+
+\medskip
+
+Da qui, abbiamo potuto categorizzare i vari sample in gruppi sulla base del tipo di file, che sia standard (\texttt{pe}) o non supportato da capa (\texttt{packed}, \texttt{installer}, ...).
+Creiamo quindi uno script Python che sia in grado di automatizzare questa azione, sia sulla base dell'exit code che dell'output sullo stderr. Otteniamo un JSON come il seguente (estratto per sintesi):
+
+\begin{minted}[samepage]{json}
+{
+  "./b9c32debb4.exe": "installer",
+  "./9f79ea539a.exe": "pe",
+  "./4726c42b25.exe": "visualbasic",
+  "./e49c42d0b1.exe": "pe",
+  .....
+}
+\end{minted}
+
+La distribuzione della tipologia dei file è riassumibile più graficamente nella figura \ref{fig:capa_file_type_split}, dove notiamo come circa la metà dei sample è difficilmente analizzabile con capa per difetti congeniti dell'analisi statica.
+Siccome non possiamo agire direttamente su questo aspetto per eseguire il tool, il prossimo passo sta nel quantificare lo spreco di risorse che si verifica analizzando le capabilities di file che poi porteranno a un fallimento del processo, e se può essere conveniente a livello di trade-off costruire una soluzione per salvaguardare l'uso di risorse saltando del tutto la sua esecuzione (codice \ref{code:static_analysis_capa_count_wasted_time}).
+
+\begin{figure}[!htb]
+    \centering
+    \includegraphics[height=1.8in]{assets/capa_file_type_split.png}
+    \caption{Divisione dei sample per tipologia}
+    \label{fig:capa_file_type_split}
+\end{figure}
+
+\begin{code}
+\begin{minted}[samepage]{python}
+times = {
+    k: v['elapsed_time']
+    for k, v in times.items() if file_types[k] != 'pe'
+}
+avg_wasted_time = sum(times.values()) / len(times)
+print(f'{avg_wasted_time:.2f} sec. per unsupported file (avg)')
+# 58.77 sec. per unsupported file (avg)
+\end{minted}
+\caption{Calcolo del tempo sprecato eseguendo capa su file non supportati}
+\label{code:static_analysis_capa_count_wasted_time}
+\end{code}
+
+\medskip
+
+Notiamo che impiega \textbf{un'eccessiva quantità di tempo} per
+eseguire il match delle regole le quali indicano a capa l'impossibilità a proseguire con una soddisfacente confidence, con una media di quasi \emph{un minuto per file}, che moltiplicato per centinaia di migliaia di file diventa una grande quantità di tempo totale che potrebbe essere usato in maniera migliore.
+
+\medskip
+
+Ci basta avere i dati di ciò che stiamo trattando, ad esempio l'output desiderato in questo caso sarà del tipo:
+\begin{minted}[samepage]{json}
+{
+    "capa": {
+        "format": "packed",
+        "arch": "i386",
+        "os": "windows"
+    }
+}
+\end{minted}
+
+Come conclusione, si è ritenuto molto valido realizzare un sistema per riconoscere preventivamente se si tratti di un file che non è possibile analizzare con capa.
+
 %\newpage
 \section{Riconoscitore custom del tipo di file}
 \label{chap:static_custom_file_detector}
@@ -301,9 +302,9 @@ Dato che si tratta di un problema di enumerazione, non aveva senso andare a crea
 Inoltre, spesso malware usano packer personalizzati, che hanno leggere differenze da quelli noti e si correrebbe il rischio di creare uno strumento poco efficace.
 Per questi e altri motivi quali il tempo a disposizione, si era inizialmente scelto di usare come base uno strumento noto (\texttt{Detect-It-Easy}) per fare una prima analisi, affiancato da uno script Python custom che decide quali operazioni svolgere a seconda del tipo di file, va a fare il parsing del JSON dato in output e si integra nello script Bash creando un layer di astrazione col resto del workflow.
 Infatti, nel caso servisse modificare lo strumento sottostante, sarebbe sufficiente adattare la traduzione dall'output specifico del tool al contratto stabilito col resto del programma per rendere seamless questa variazione, anche sostanziale.
-Tuttavia, ci sono alcuni tipi che anche Detect-It-Easy fallisce a riconoscere, portando poi a un crash di capa quando eseguito.
+Tuttavia, ci sono alcuni tipi che anche Detect-It-Easy fallisce a riconoscere, portando poi a un crash di capa, dopo aver già consumato risorse per la propria esecuzione parziale.
 
-Per questo motivo è stato creato un \textbf{custom detector}, scritto in Python, che implementa in maniera molto più efficiente e diretta, le sole regole di capa che riconoscono i file specifici su cui non è in grado di lavorare.
+Per questo motivo è stato creato un \textbf{custom detector}, scritto in Python, che implementa in maniera molto più efficiente e diretta le sole regole di capa che riconoscono i file specifici su cui non è in grado di lavorare.
 
 Di seguito possiamo osservare come funziona per dei tipi famosi di questi strumenti, ovvero il packer UPX e l'installer InnoSetup.
 Sono state usate caratteristiche e regole note
@@ -312,7 +313,7 @@ per eseguire la detection.
 
 La lettura degli header del file PE sfrutta la libreria Python \texttt{pefile} per non eseguire l'intero parsing a mano dei byte degli header e non essere dipendenti da implementazioni native dell'OS come con l'uso dell'header \texttt{<windows.h>} in un programma C.
 
-\begin{figure}[!htb]
+\begin{figure}[htbp]
     \centering
     \includegraphics[width=\textwidth]{assets/custom_file_detector_output.png}
     \caption{Custom file detector output}
@@ -348,8 +349,9 @@ def is_upx(file_path):
 
 \bigskip
 
-Andando però a sfruttare la libreria Python per il parsing del file PE senza ricorrere a implementazioni native Windows:
+Andando però a sfruttare la libreria Python per il parsing del file PE senza ricorrere a implementazioni native Windows, per facilitare la realizzazione e permettere così l'esecuzione del riconoscitore anche su altri sistemi operativi:
 
+\begin{code}
 \begin{minted}{python}
 import pefile
 
@@ -362,17 +364,20 @@ def get_section_names(file_path):
     pe.close()
     return sections_set
 \end{minted}
+\label{lst:pe_naive_section_names_extraction}
+\caption{Script Python per estrarre i nomi delle sezioni di un PE con pefile}
+\end{code}
 
 \subsubsection{Analisi preliminare con readelf}
-Notiamo come questa tecnica funzioni solo in ambito Windows, mentre su sistemi GNU/Linux notiamo con strumenti quali \texttt{readelf} che il file sia privo di header delle sezioni
+Si evince come questa tecnica funzioni solo su file analizzati in ambito Windows, mentre su sistemi GNU/Linux osserviamo con strumenti quali \texttt{readelf} che un eseguibile pacchettizzato con UPX sia privo di header delle sezioni
 (in accordo con la regola CAPA stessa, che infatti include questo match solo se ci troviamo su un file PE, come indicato dall'apposita riga \texttt{- format: pe}).
 
-Negli eseguibili in formato ELF infatti è più comune trovare una situazione in cui l'header delle sezioni è mancante. Infatti, tale informazione non è usata in alcun modo dal kernel durante il caricamento in memoria del programma, nella creazione della process image. Inoltre, non è indicatore di azioni malevoli, ma sicuramente della volontà di rendere l'analisi più difficile, il cui caso può riguardare anche binari di produzione di software proprietario closed-source.
+Negli eseguibili in formato ELF infatti è ammissibile trovare una situazione come questa, dove l'header delle sezioni è mancante. Infatti, tale informazione non è usata in alcun modo dal kernel durante il caricamento in memoria del programma, nella creazione della process image. Inoltre, non è indicatore di azioni malevoli, ma sicuramente della volontà di rendere l'analisi più difficile, il cui caso può riguardare anche release di software proprietario closed-source.
 
 \subsubsection{Analisi dell'entropia}
-Una caratteristica comune di binari compressi o con payload criptati è l'aumento di entropia. Infatti, sia la compressione che la crittografia vanno ad aumentare l'entropia all'interno di uno stesso blocco di file, motivo per cui è essenziale eseguire la compressione di un file prima della sua crittazione, altrimenti l'algoritmo di compressione sarebbe molto meno efficace.
+Una caratteristica comune di binari compressi o con payload criptati è l'aumento di entropia. Infatti, sia la compressione che la crittografia vanno ad aumentare questa variabile all'interno di uno stesso blocco di file. Segue la stessa logica il motivo per cui, in generale, si esegue la compressione di un file prima della sua crittazione, altrimenti l'algoritmo di compressione sarebbe molto meno efficace per via della maggiore entropia ottenuta.
 
-Come esempio, è stato preso un eseguibile il cui sorgente è ininfluente, compilato con il compilatore C \texttt{gcc} e poi calcolata l'entropia sia prima che dopo averlo pacchettizzato con UPX. I grafici sono stati generati tramite l'ausilio di uno script Python creato ad-hoc e sfruttando il calcolo dell'entropia di Shanon.
+Come esempio, è stato preso un eseguibile il cui sorgente è ininfluente, compilato con il compilatore C \texttt{gcc} e poi calcolata l'entropia sia prima che dopo averlo pacchettizzato con UPX. I grafici in figura \ref{fig:entropy_upx_comparison} sono stati generati tramite l'ausilio di uno script Python creato ad-hoc e sfruttando il calcolo dell'entropia di Shanon.
 
 \begin{figure}[htbp]
     \centering
@@ -430,10 +435,10 @@ def calculate_entropy(data):
 %%%%%%%%%%%%% https://fsec404.github.io/blog/Shanon-entropy/
 
 \subsection{Inno-Setup Installer}
-Con Inno-Setup, possiamo notare come sia ancora più semplice il riconoscimento. Infatti, non abbiamo bisogno di andare a vedere le sezioni, ma è sufficiente controllare la presenza di alcune stringhe statiche nel file.
+Con Inno-Setup, possiamo notare come sia ancora più semplice il riconoscimento. Infatti, non abbiamo bisogno di andare a vedere le sezioni, ma è sufficiente controllare la presenza di alcune stringhe nel file.
 
 InnoSetup è un famosissimo installer per Windows e, come tale, non permette un'analisi statica
-efficace. Infatti, nulla vieta che appaia come lecito per poi andare a runtime a scaricare e installare il vero payload malevolo, ma tale comportamento è affidato alla parte dinamica dell'analisi, dove sarà possibile osservare anche tutti i file scaricati, oltre all'attività di rete e tutte le syscall richiamate.
+efficace. Infatti, nulla vieta che appaia come lecito per poi andare a runtime a scaricare e installare il vero payload malevolo, ma tale comportamento è affidato alla parte dinamica dell'analisi, dove sarà possibile osservare anche tutti i file scaricati, oltre all'attività di rete e tutte le syscall richiamate (\emph{behavioural analysis}).
 
 Nuovamente, andiamo a paragonare la regola capa alla nostra implementazione:
 
@@ -470,7 +475,7 @@ def is_innosetup(file_path):
 \subsection{Design scalabile e modulare}
 Si nota immediatamente come una tale implementazione è poco scalabile e presenta numerose ridondanze da rimuovere.
 
-Studiando le regole di interesse all'interno del repository GitHub \textit{capa-rules}, osserviamo come le regole siano principalmente di due categorie: basate su match di stringhe o basate su match di nomi di sezioni nel file eseguibile.
+Studiando le regole di interesse all'interno del repository GitHub \textit{capa-rules}, osserviamo come siano principalmente di due categorie: basate su match di stringhe o basate su match di nomi di sezioni nel file eseguibile.
 
 Da questa osservazione, elaboriamo la struttura del programma software di detection. Precisamente, decidiamo di strutturarlo in classi dove ogni regola è una classe a sé, e individuiamo le seguenti classi padre (figura \ref{fig:base_custom_static_analyzer_uml}):
 \begin{itemize}
