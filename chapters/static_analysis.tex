@@ -977,4 +977,27 @@ Non siamo ancora giunti al punto di rilasciare il progetto e attribuirgli una ve
 \end{figure}
 
 \section{CI/CD Pipeline}
-Solo su develop = branch protetti
+Successivamente alla fase di sviluppo, seguono il test e il deploy in ambiente di produzione o pre-produzione.
+Si è reso necessario automatizzare questo aspetto, per ridurre l'errore umano e i costi del personale per la gestione.
+La soluzione più idonea a questo scopo è stata sfruttare le funzionalità di pipeline del server GitLab aziendale. Infatti, è possibile definire tramite un file in formato YAML tutti gli step di build, test e deploy per il codice presente nel repository Git, eseguendoli su un Gitlab Runner.
+
+Un GitLab Runner si concretizza in un server fisico che esegue questo strumento in grado di ricevere dall'orchestrator GitLab il prossimo task della coda che deve eseguire, e riportare il risultato ottenuto, che sia un artefatto da tenere archiviato o un altro output. Esistono sia Runner forniti come SaaS (\emph{Software-as-a-Service}), che self-hosted, come nel nostro caso. La potenza dell'orchestrator sta nell'astrarre tutto ciò, rendendo il processo egualmente funzionante a prescindere dalla reale infrastruttura sottostante.
+L'associazione tra il task della pipeline e i Runner disponibili ad eseguirlo avviene attraverso un tag, che sarà assegnato al primo nel file \texttt{.gitlab-ci.yml} e poi ai secondi nella pagina di configurazione della macchina.
+In questo modo, definiamo chiaramente quali server hanno la responsabilità per le pipeline di quali progetti, permettendo di definire anche ambienti distinti per le varie fasi, se il caso specifico lo richiede.
+
+La pipeline realizzata per le operazioni di CI/CD nel progetto qui realizzato si compone dei seguenti step:
+\begin{enumerate}
+    \item \texttt{build\_docker}: fase di build dell'immagine Docker, partendo dal codice sorgente ottenuto dal repository e dalle istruzioni contenute nel Dockerfile, ottenendo come output l'immagine finale, pronta per essere testata. Verrà conservata per 2 settimane nell'archivio del server GitLab in caso servisse in un breve futuro fare ulteriori controlli;
+    \item \texttt{test\_analysis}: fare di test, dove viene presa in input l'immagine appena prodotta e vengono eseguiti test funzionali.
+    Questi hanno lo scopo di verificare che l'eventuale deploy di questa immagine non causi danni o regressioni al servizio, andando a controllare tutta una serie di casi tipici nei quali ci si può ritrovare, come un file eseguibile tradizionale, vuoto, di altro tipo o eseguibile ma non supportato da alcuni strumenti - vedi \texttt{capa} (sez. \ref{chap:static_custom_file_detector}).
+    Si limita anche il tempo di esecuzione, per prevenire casi di loop o tempo di esecuzione eccessivamente più lungo della versione precedente;
+    \item \texttt{aws\_deploy}: fase finale dove avviene il deploy, se le precedenti hanno dato esito positivo. Il deploy dell'immagine Docker realizzata e testata come nuovo codice della AWS Lambda di analisi è implementato usando la AWS CLIv2, che permette di eseguire tale operazione nella maniera più semplice, prima caricando la nuova immagine sul container registry AWS ECR, poi andando a sostituire l'immagine della Lambda, senza creare downtime o disagi alle attuali esecuzioni in corso.
+\end{enumerate}
+
+È bene notare come, in molti casi di self-hosting, anche il Runner stesso esegua all'interno di una sua immagine Docker. Dovendo però costruire, poi eseguire, un'immagine Docker all'interno di un altro container, è stato necessario adoperare il servizio \emph{DinD} (Docker in Docker).
+
+Inoltre, nella fase di test, i sample vengono presi direttamente da una cartella specifica nel repository Git, così da mantenerne la catalogazione in maniera semplice ed efficace.
+Tuttavia, in alcune configurazioni dei Runner, può accadere che DinD vada a richiamare il Docker daemon (\texttt{dockerd}) dell'host vero e proprio, e non uno virtualizzato nel container, come accaduto nel Runner aziendale già in opera per altri progetti.
+La soluzione qui è stata quella di \textbf{evitare i bind di cartelle con percorso assoluto} perché ciò avrebbe comportato una mal interpretazione del path, ponendolo come path dell'host mentre in realtà è del container stesso.
+In alternativa è stato usato un nuovo volume Docker con un nome univoco per ogni esecuzione, così da spostare tutti i sample in esso attraverso un archivio Tar inviato tramite pipe, ed eseguito il bind di questo volume al container di test innestato anziché usare path assoluti, che com'è appena emerso, possono causare problemi in talune circostanze.
+Ottenere l'output dell'esecuzione sui sample di test segue la stessa logica ma in maniera speculare, pertanto è stata omessa per brevità.
