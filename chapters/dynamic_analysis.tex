@@ -72,7 +72,11 @@ La prima ci servirà solamente in locale sulla VM stessa, non esposta all'estern
 \subsection{Creazione delle VM Windows}
 Per quanto concerne le VM innestate con Windows, si è scelto di adoperare la versione 7 del sistema operativo. Questa è ancora molto diffusa, soprattutto in ambito enterprise dove eventuali malware creerebbero maggiori danni, è supportata da Cuckoo allo stato attuale e, infine, ha opzioni per disattivare il maggior numero di funzionalità di sicurezza di Windows, quindi analizzare a pieno tutti i comportamenti che desidererà compiere il malware nell'ambiente di sandbox.
 
-La creazione di una o più istanze del Guest è stata eseguita con \texttt{vmcloak}. Questo strumento si interfaccia con VirtualBox e consente la creazione di VM in maniera automatizzata e replicabile.
+La creazione di una o più istanze del Guest è stata eseguita con \texttt{vmcloak}.
+Questo strumento si interfaccia con VirtualBox e consente la creazione di VM in maniera automatizzata e replicabile.
+
+Viene assegnata una quantità di risorse paragonabile a un computer di fascia bassa verosimile. Il disco sarà di 128GB, allocato dinamicamente, con 4 core CPU e 2GB di RAM. Consentità un'esecuzione non eccessivamente limitante, senza sprecare troppe risorse, specialmente se si prevede di aumentare la parallelizzazione, come spiegato nella sez. \ref{chap:dynamic-vm-replication}.
+
 Vengono poi installati al loro interno tutta una serie di strumenti di utilità che ci si aspetterebbe di trovare in un normale PC aziendale o personale. Questa caratteristica potrebbe sembrare superflua ma in realtà gioca un ruolo molto importante assieme alle più avanzate tecniche di anti-VM-detection che vedremo nella sezione \ref{chap:dynamic-anti-vm-detection}:
 \begin{itemize}
     \item Serve come prima tecnica superficiale di anti-VM-detection, per cui un malware potrebbe rilevare se ci si trova in un ambiente di test o meno in base alla presenza o assenza di software che la quasi totalità degli utenti reali avrebbe sul proprio computer
@@ -145,6 +149,7 @@ Ci si ritiene però altamente soddisfatti del risultato poiché sono pochissimi 
 \end{figure}
 
 \subsection{Replicazione VM}
+\label{chap:dynamic-vm-replication}
 Una volta realizzata una istanza della VM Windows 7, per migliorare la scalabilità del sistema,
 quindi permettere che più task possano eseguire in parallelo, 
 si devono creare più istanze replicate della macchina virtuale di sandbox.
