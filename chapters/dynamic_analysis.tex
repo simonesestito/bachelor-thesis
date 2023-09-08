@@ -232,15 +232,102 @@ WantedBy=multi-user.target
 \label{fig:systemd-cuckoo-dependency-graph}
 \end{figure}
 
-\subsection{VM Client con CLI}
+\section{VM Client con CLI}
+Seguendo l'architettura desiderata in figura \ref{fig:cuckoo_vms_architecture},
+si procede alla realizzazione della API Client VM.
+Questa deve rispettare una serie di caratteristiche, come l'isolamento e la leggerezza, non contenendo particolari software.
 
-\subsubsection{Nuovo formato del report}
-Differenze, perché è migliore, come si fa il parsing, problemi ancora aperti, etc
+Dovrà includere un programma client, scritto in Python, realizzato da zero per il progetto, utile sia come vero e proprio client che come Proof-of-Concept per una futura integrazione con le API della Threat Intelligence. Questo, infatti, interagisce direttamente con le REST API esposte da Cuckoo, esegue il parsing dei risultati e la modellazione delle chiamate API in distinti metodi di una classe per astrarne l'implementazione.
+Essendo già così suddiviso, rende possibile la scrittura di un altro programma Python per essere usato in un diverso ambiente, riciclando il codice relativo alle chiamate REST. Ciò porta a un risparmio di risorse umane per futuri sviluppi e alla minor introduzione di bug, riutilizzando codice già testato in precedenza.
 
-\subsection{Hardening}
+Il Client può essere usato come libreria o essere eseguito direttamente da terminale come modulo (\texttt{python3 -m cuckoo-api-client ARGS...}), passando diverse possibili opzioni, tra cui l'analisi di un file o di un'intera cartella, e l'impostazione di un path dove andare a salvare tutti gli output.
+Questi output consistono nel report JSON elaborato, nonché gli screenshot dell'esecuzione e il file pcap con la cattura dei pacchetti di rete.
+Per agevolarne l'usabilità, fornisce messaggi di errore e di help tramite l'ausilio del modulo \texttt{argparse}, e durante l'esecuzione mostra output colorato e in costante aggiornamento sullo stato dei task, che siano in coda, terminati o pendenti.
+
+La VM ne conterrà una copia già al suo interno, così da ridurre dipendenze esterne o necessità di mount di cartelle dall'host fisico. Per la massima leggerezza, è basata su Arch Linux con installate solo le dipendenze strettamente necessarie per il funzionamento, e XFCE come Desktop Environment leggero per la visualizzazione di screenshot o altri file che possono essere più comodamente aperti utilizzando programmi con una GUI. Grazie a questa scelta, è stato possibile mantenere la dimensione della macchina virtuale, esportata come file OVA, inferiore a 3GB.
+
+Avrà un indirizzo IP statico per facilitarne la raggiungibilità e sarà connessa all'interfaccia di rete interna \emph{"cuckoo-net"}, come descritto nell'architettura.
+
+\subsection{Nuovo formato del report}
+Dopo una prima analisi del report originale, così come elaborato da Cuckoo, ci si è resi conto della sua bassa consultabilità, risultando eccessivamente lungo e dispersivo. Inoltre, alcune voci non sono ben organizzate, come le syscall intercettate che non presentano una chiara distinzione tra i vari thread del processo ma sono elencate tutte assieme. Questo comporta che, in caso di due o più thread che eseguono operazioni distinte, non è facile ricostruire il flusso logico semplicemente leggendo questo elenco, poiché i vari flussi sarebbero uniti.
+Per questa e altre ragioni di comodità da parte dell'analista, oltre a motivazioni più tecniche dovute alla struttura del JSON con cui generalmente lavora la Threat Intelligence, si è optato per eseguire una trasformazione lato client.
+
+Per prima cosa, viene studiata la struttura del JSON fornito da Cuckoo per capire come e dove intervenire. Nel primo livello, si tratta di un oggetto (e non una lista), con diverse chiavi: questa caratteristica risulta utile, infatti restituire come dato un oggetto rende successivi aggiornamenti o aggiunte alla struttura dati molto più agevole.
+Le prime chiavi che sono ben strutturate e andremo a ricopiare nel report trasformato sono i metadati (\texttt{target} e \texttt{task\_info}), i dati sugli screenshot e le stringhe individuate nel file.
+Le sezioni dov'è richiesto il maggior intervento per organizzare meglio, secondo le esigenze, sono quella relativa ai processi e syscall, e l'area di network con le analisi del traffico di rete.
+
+Le informazioni sui processi vengono fornite in maniera estremamente ridondante e dispersiva: vengono elencati tutti i processi, senza una struttura ad albero, e le syscall relative non sono organizzate nei vari thread, infine sono ripetute varie volte in diverse sottosezioni.
+Il nuovo report conterrà la seguente struttura:
+\begin{itemize}
+    \item Una foresta dei processi, dove ognuno ha i propri figli direttamente nella struttura JSON: si parla di foresta e non di albero perché, nel sottoinsieme dei processi analizzati, possono esistere più radici, quindi più alberi distinti tra loro
+    \item Per ogni processo, è identificato il PID, il path da cui è stato lanciato, i match con YARA rules identificati, assieme a tutta una serie di statistiche sul numero di syscall eseguite per categoria - come \emph{storage} o \emph{network}
+    \item Un processo a sua volta avrà un insieme di thread, ciascuno col proprio elenco di syscall, ordinate cronologicamente per istanze di invocazione
+    \item Ogni chiamata a sistema conterrà informazioni quali il nome mnemonico, la categoria, i parametri in input e il valore restituito in output
+\end{itemize}
+
+La sezione riguardante il traffico di rete, vede una divisione (prima non presente) tra le categorie di traffico e protocollo usato, come HTTP, HTTPS, TCP con protocollo applicazione custom, SMTP per invio di mail, richieste DNS, UDP o altri protocolli supportati. La divisione, inoltre, serve a far ignorare all'analista tutto ciò che non è rilevante, focalizzandosi su elementi anomali, come una calcolatrice che invia traffico SMTP verso un server con IP non conosciuto.
+Per tutti i protocolli, sono riportati gli indirizzi IP sorgente e destinazione, da cui possiamo dedurre sia l'interlocutore che la direzione della comunicazione, così come le porte coinvolte e il timestamp di esecuzione.
+Protocolli di livello applicazione, come HTTP, contengono informazioni già elaborate. Nel caso di HTTP, viene restituita una struttura dati ad oggetto dove sono già presenti in maniera ordinata i vari header, lo status code e il body di richiesta (se presente) o risposta.
+Se possibile, vengono decrittate le comunicazioni TLS, sia con metodologie MITM (man-in-the-middle, sconsigliato e rilevabile dal processo con tecniche quali il Certificate Pinning) che leggendo dai buffer che vengono inviati alle syscall durante queste operazioni, a patto che non abbia linking statico alle librerie OpenSSL e simili, ma usi le syscall fornite dal sistema operativo e poi intercettate da Cuckoo Sandbox.
+
+\newpage
+\begin{code}
+\begin{minted}[samepage]{json}
+{
+  "process_forest": [{
+      "pid": 1548,
+      "is_root": true,
+      "children": [{
+          "pid": 2128,
+          "is_root": false,
+          "children": []
+        }]
+    }],
+  "processes": {
+    "2128": {
+      "process_name": "win-http.exe",
+      "summary": {
+        "connects_ip": ["93.184.216.34"],
+        "resolves_host": ["example.com"]
+      },
+      "signatures": [],
+      "apistats": {
+        "getaddrinfo": 1,
+        "socket": 1
+      },
+      "modules": [{
+          "baseaddr": "0x77110000",
+          "filepath": "C:\\Windows\\SYSTEM32\\ntdll.dll"
+      }],
+      "main_thread_id": 884,
+      "thread_calls": {
+        "884": [{
+            "category": "network",
+            "status": 1,
+            "api": "socket",
+            "return_value": 96,
+            "arguments": {
+              "protocol": 0,
+              "socket": 96,
+              "af": 2,
+              "type": 1
+            },
+            "tid": 884
+        }]
+      }
+}}}
+\end{minted}
+\caption{Esempio di output per le informazioni sui processi, sintetizzato}
+\end{code}
+
+\section{Hardening}
 \label{chap:dynamic-vm-hardening}
 Seguire le varie guide, utente custom, rete, etc
 
+Auth token nel client, .env file, ...
+
 \section{Plugin aggiuntivi}
+\subsection{Parsing}
+\subsection{Disponibilità HTTP server}
 
 \section{Workflow analisi dinamica}
