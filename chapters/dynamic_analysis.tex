@@ -51,6 +51,7 @@ L'uso di una VM che al suo interno ne contiene altre 2 o più innestate, anzich�
 \end{figure}
 
 \subsection{Installazione e configurazione}
+\label{chap:cuckoo-installation-configuration-services}
 Una volta delineato lo schema di ciò che si vuole ottenere e il software alla base da cui partire, il primo passo è la sua installazione e configurazione. Non trattandosi di un normale software ma di una serie di componenti complessi da integrare, fin da subito la stessa installazione della sandbox si è dimostrata articolata.
 
 Viene creata la macchina virtuale Cuckoo VM che, siccome conterrà al suo interno sia componenti complessi che altre macchine virtuali, deve avere allocate ingenti risorse. Si è scelto di riservare 8 core CPU e 8GB di RAM a tale scopo, con inizialmente solo 2 istanze delle VM innestate Windows 7. In caso si voglia scalare questo sistema su un server più potente, basterà solamente modificare le risorse allocate nella configurazione di VirtualBox in maniera semplice.
@@ -166,6 +167,70 @@ sudo sysctl -w net.ipv4.conf.enp0s3.forwarding=1
 Infine, si creano le istanze con vmcloak e si eseguono gli snapshot: questi verranno ripristinati subito dopo l'esecuzione di un task di analisi, così da ripartire sempre con lo stesso sistema pulito iniziale e non rischiare che un malware, dopo che infetti la VM, vada a mantenere il controllo della macchina virtuale anche successivamente.
 
 \subsection{Servizi systemd}
+Si nota come al boot, tutti i servizi che precedentemente erano funzionanti, debbano essere eseguiti manualmente. Questo passaggio è totalmente da rimuovere per una corretta automazione del processo, e la soluzione migliore in ambito Linux per eseguire servizi al boot è la creazione di \emph{unit di systemd}. Systemd è un sistema di init e gestione dei servizi, ampiamente diffuso nella quasi totalità delle distribuzioni Linux, che deve eseguire con PID 1 (PID 0 è il processo scheduler, parte del kernel) per il corretto funzionamento. I servizi che deve eseguire sono descritti attraverso dei file posti in \texttt{/etc/systemd/system/} chiamati \textbf{unit}.
+Come caratteristiche fondamentali, una unit conterrà:
+\begin{itemize}
+    \item Un nome, dato dal file stesso, e una descrizione per permetterne il riconoscimento in futuro
+    \item Uno o più servizi o target da cui dipende, che devono essere avviati prima di esso
+    \item L'utente con il quale eseguire
+    \item Il comando da lanciare per avviare ed interrompere il servizio
+    \item Politiche di restart, che imposteremo ad \emph{always}
+    poiché necessitiamo che i vari componenti vengano riavviati automaticamente se dovessero smettere di funzionare
+\end{itemize}
+
+Vengono così create le seguenti unit:
+\begin{itemize}
+    \item \texttt{vboxnet0.service} contiene il comando per creare e avviare preventivamente l'interfaccia di rete
+    che useranno Cuckoo e le VM Guest per dialogare e far transitare il traffico di rete da sniffare
+    \item \texttt{cuckoo-docker.service} avvia tutti i servizi accessori che Cuckoo
+    necessita per il funzionamento, come i database e il resto menzionato in \ref{chap:cuckoo-installation-configuration-services},
+    tramite un file Docker Compose
+    \item \texttt{cuckoo.service}, che avvierà il demone di Cuckoo una volta che le dipendenze saranno pronte all'uso
+    \item \texttt{cuckoo-api.service}, responsabile del server di REST API usato poi dal client esterno a questa VM
+    \item \texttt{cuckoo-web.service} risulta utile quando, in fase di testing, si vuole usare una comoda UI per capire il funzionamento
+\end{itemize}
+
+\begin{code}
+\begin{minted}{INI}
+[Unit]
+Description=Cuckoo Web Service
+Requires=cuckoo.service
+After=cuckoo.service
+
+[Service]
+User=cuckoo
+RemainAfterExit=yes
+ExecStart=/home/cuckoo/cuckoo/bin/cuckoo web -H 127.0.0.1 -p 8000
+TimeoutStartSec=0
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+\end{minted}
+\label{lst:systemd-unit-example}
+\caption{Esempio di systemd unit per il servizio Web}
+\end{code}
+\bigskip
+
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}[node distance=1.5cm, xscale=2]
+  % Nodes
+  \node (cuckoo) [ellipse, draw] {cuckoo};
+  \node (vbox) [ellipse, draw, below left= of cuckoo] {vboxnet0};
+  \node (docker) [ellipse, draw, above left= of cuckoo] {cuckoo-docker};
+  \node (api) [ellipse, draw, below right= of cuckoo] {cuckoo-api};
+  \node (web) [ellipse, draw, above right= of cuckoo] {cuckoo-web};
+
+  % Edges
+  \draw[->] (vbox) -- (cuckoo);
+  \draw[->] (docker) -- (cuckoo);
+  \draw[->] (cuckoo) -- (api);
+  \draw[->] (cuckoo) -- (web);
+\end{tikzpicture}
+\caption{Grafo delle dipendenze dei servizi systemd aggiunti}
+\label{fig:systemd-cuckoo-dependency-graph}
+\end{figure}
 
 \subsection{VM Client con CLI}
 
