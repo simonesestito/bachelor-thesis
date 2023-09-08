@@ -270,6 +270,10 @@ Per tutti i protocolli, sono riportati gli indirizzi IP sorgente e destinazione,
 Protocolli di livello applicazione, come HTTP, contengono informazioni già elaborate. Nel caso di HTTP, viene restituita una struttura dati ad oggetto dove sono già presenti in maniera ordinata i vari header, lo status code e il body di richiesta (se presente) o risposta.
 Se possibile, vengono decrittate le comunicazioni TLS, sia con metodologie MITM (man-in-the-middle, sconsigliato e rilevabile dal processo con tecniche quali il Certificate Pinning) che leggendo dai buffer che vengono inviati alle syscall durante queste operazioni, a patto che non abbia linking statico alle librerie OpenSSL e simili, ma usi le syscall fornite dal sistema operativo e poi intercettate da Cuckoo Sandbox.
 
+Una caratteristica che va tenuta a mente quando si analizzano i risultati della parte di networking è che si basano principalmente sul traffico catturato ascoltando l'interfaccia di rete. Come conseguenza di ciò, emerge come nel risultato siano presenti pacchetti verso host che il processo sotto analisi non ha mai tentato di contattare, ma che il resto del sistema ha interrogato per altre sue funzioni.
+Da un lato può essere visto come un punto a favore, così che se per qualche vulnerabilità di programmi di sistema, venisse effettuato traffico di rete malevolo partendo proprio da questi, sarebbe comunque rilevato e analizzato dall'analista. In maniera speculare però è un punto a sfavore l'aver il risultato dell'analisi meno pulito e con elementi superflui.
+Si è scelto di rimandare tale decisione all'analista ora e al sistema di Threat Intelligence poi, ad esempio eseguendo una analisi di un programma mockup che non esegua alcuna operazione di rete, per estrarre così il traffico che ci possiamo aspettare da altre future analisi. Ai fini del progetto, vengono conservati tutti i pacchetti.
+
 \newpage
 \begin{code}
 \begin{minted}[samepage]{json}
@@ -406,6 +410,7 @@ Se possibile, vengono decrittate le comunicazioni TLS, sia con metodologie MITM 
 \end{minted}
 \caption{Risultato trasformato per la parte di networking, inclusi i pacchetti provenienti da altri processi}
 \end{code}
+\newpage
 
 \section{Hardening}
 \label{chap:dynamic-vm-hardening}
