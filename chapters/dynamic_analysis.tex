@@ -320,6 +320,93 @@ Se possibile, vengono decrittate le comunicazioni TLS, sia con metodologie MITM 
 \caption{Esempio di output per le informazioni sui processi, sintetizzato}
 \end{code}
 
+\begin{code}
+\begin{minted}{json}
+{
+  "network": {
+    "tls": [],
+    "udp": [
+      {
+        "src": "192.168.56.101",
+        "dst": "20.101.57.9",
+        "offset": 515017,
+        "time": 6.215277194976807,
+        "dport": 123,
+        "sport": 123
+      }
+    ],
+    "dns_servers": [
+      "8.8.8.8"
+    ],
+    "icmp": [],
+    "tcp": [
+      {
+        "src": "192.168.56.101",
+        "dst": "51.132.193.105",
+        "offset": 522251,
+        "time": 11.470929145812988,
+        "dport": 443,
+        "sport": 49165
+      }
+    ],
+    "dns": [
+      {
+        "type": "A",
+        "request": "example.com",
+        "answers": [
+          {
+            "data": "93.184.216.34",
+            "type": "A"
+          }
+        ]
+      }
+    ],
+    "http": [
+      {
+        "status": 304,
+        "src": "192.168.56.101",
+        "protocol": "http",
+        "dst": "93.184.221.240",
+        "uri": "/msdownload/update/v3/static/trustedr/en/authrootstl.cab",
+        "host": "www.download.windowsupdate.com",
+        "dport": 80,
+        "sport": 49191,
+        "method": "GET",
+        "request": {
+          "headers": "Connection: Keep-Alive\r\nAccept: */*",
+          "content_sha1": "da39a3ee5e6b4b0d3255bfef95601890afd80709"
+        },
+        "response": {
+          "headers": "HTTP/1.1 304 Not Modified\r\nAccept-Ranges: bytes",
+          "content_sha1": "da39a3ee5e6b4b0d3255bfef95601890afd80709"
+        }
+      },
+      {
+        "status": 200,
+        "src": "192.168.56.101",
+        "protocol": "http",
+        "dst": "93.184.216.34",
+        "uri": "/",
+        "host": "example.com",
+        "dport": 80,
+        "sport": 49171,
+        "method": "GET",
+        "request": {
+          "headers": "GET / HTTP/1.1\r\nHost: example.com\r\nConnection: close",
+          "content_sha1": "da39a3ee5e6b4b0d3255bfef95601890afd80709"
+        },
+        "response": {
+          "headers": "HTTP/1.1 200 OK\r\nCache-Control: max-age=604800",
+          "content_sha1": "4a3ce8ee11e091dd7923f4d8c6e5b5e41ec7c047"
+        }
+      }
+    ]
+  }
+}
+\end{minted}
+\caption{Risultato trasformato per la parte di networking, inclusi i pacchetti provenienti da altri processi}
+\end{code}
+
 \section{Hardening}
 \label{chap:dynamic-vm-hardening}
 Seguire le varie guide, utente custom, rete, etc
