@@ -414,9 +414,42 @@ Si è scelto di rimandare tale decisione all'analista ora e al sistema di Threat
 
 \section{Hardening}
 \label{chap:dynamic-vm-hardening}
-Seguire le varie guide, utente custom, rete, etc
+Un sistema di sandbox è molto delicato e deve essere protetto adeguatamente.
+La VM dove eseguono Cuckoo e le VM guest innestate rappresentano il punto critico, dato che una loro errata configurazione potrebbe aprire le porte all'attaccante verso l'intero sistema host ed evadere così dalla sandbox.
 
-Auth token nel client, .env file, ...
+A livello di rete, si è notato come un processo interno alla sandbox (Windows 7) possa riuscire a contattare con successo altri dispositivi nella LAN del sistema host fisico. Questo deve essere chiaramente proibito, poiché un malware dalla sandbox potrebbe scoprire e attaccare altri dispositivi vulnerabili nella propria rete domestica o aziendale.
+Per far ciò, vengono impostate delle regole precise di IPTables. Useremo il programma \texttt{ufw} per applicare le regole, dato che sotto la scocca usa comunque IPTables ma con un'interfaccia per l'utente molto più intuitiva, restando pur sempre su CLI.
+Blocchiamo, dalla VM cuckoo più esterna, tutto il traffico verso l'host (interfaccia \texttt{enp0s3}) che sia indirizzato a classi di IP privati. Nell'esempio di seguito, applichiamo la regola per proibire di raggiungere tutti i dispositivi in una rete con indirizzi privati di classe C; verrà replicato per tutte le altre classi di indirizzi da bloccare.
+
+\begin{minted}{shell}
+sudo ufw deny out on enp0s3 to 192.168.0.0/16
+sudo ufw enable && sudo ufw reload
+\end{minted}
+
+Per quanto riguarda il gateway, dobbiamo consentire il traffico che transita verso di esso, ma non direttamente a lui destinato. La regola è applicabile con il seguente comando di ufw, dove \texttt{10.0.2.2} è l'indirizzo IP del gateway, concretizzato nell'host VirtualBox:
+
+\begin{minted}{shell}
+sudo ufw deny out on enp0s3 to 10.0.2.2
+\end{minted}
+
+La comunicazione tra la VM di analisi e la VM client, che transita sull'interfaccia di rete interna di VirtualBox denominata \texttt{cuckoo-net}, poi assegnata al sistema con nome \texttt{enp0s8}, deve essere controllata.
+Ricordando che le due macchine hanno assegnati i propri IP statici, dobbiamo limitare il traffico facendo sì che solo la VM client sia in grado di aprire una connessione verso l'analizzatore, limitatamente alla porta 8080. Oltre a limitare sul client tutte le connessioni in ingresso a livello di firewall, anche se esista una porta aperta con bind su 0.0.0.0 (tutte le interfacce), va applicata la seguente regola sull'analizzatore:
+\begin{minted}{shell}
+sudo ufw allow in \
+    on enp0s8 \
+    to 192.168.50.11 \
+    port 8080 proto tcp \
+    from 192.168.50.12
+\end{minted}
+questa permette il traffico in ingresso, solo sulla porta 8080 dove è in ascolto il server REST API di Cuckoo, tramite una connessione TCP, dall'interfaccia di rete condivisa e isolata tra le due macchine, unicamente dall'indirizzo IP statico a lei assegnato.
+
+Oltre alla rete, si vuole proteggere anche tutto l'ambiente di esecuzione interno all'analizzatore, quindi si è creato un utente Unix distinto, denominato \texttt{cuckoo}, da cui lanciamo VirtualBox e non dispone di alcun permesso, tantomeno è nel gruppo sudo (i cosiddetti \emph{sudoers}). La sua password è bloccata e la shell è impostata a \texttt{/usr/bin/nologin} così da inibirne completamente l'accesso.
+Per l'avvio però è presente un utente \texttt{pc} che può eseguire il programma di VirtualBox e aprire una shell come utente \texttt{cuckoo} utilizzando sudo:
+\begin{minted}{shell}
+xhost +SI:localuser:cuckoo
+sudo -u cuckoo virtualbox
+\end{minted}
+Il comando di \texttt{xhost} si è reso necessario per far sì che anche la GUI del programma possa essere correttamente visualizzata. XHost è una utility del server grafico X, e con questo comando si autorizza l'utente meno privilegiato a contattarlo per mostrare finestre o altri elementi visivi nella sessione dell'utente corrente.
 
 \section{Plugin aggiuntivi}
 \subsection{Parsing}
