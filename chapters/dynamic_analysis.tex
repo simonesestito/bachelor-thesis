@@ -452,7 +452,85 @@ sudo -u cuckoo virtualbox
 Il comando di \texttt{xhost} si è reso necessario per far sì che anche la GUI del programma possa essere correttamente visualizzata. XHost è una utility del server grafico X, e con questo comando si autorizza l'utente meno privilegiato a contattarlo per mostrare finestre o altri elementi visivi nella sessione dell'utente corrente.
 
 \section{Plugin aggiuntivi}
-\subsection{Parsing}
-\subsection{Disponibilità HTTP server}
+Si è optato per estendere la sandbox, integrando altri software più innovativi e fornire una metodologia standard per un'integrazione di ulteriori strumenti.
+I tool in questione richiesti sono:
+\begin{itemize}
+    \item \textbf{Patriot},
+    \footnote{\url{https://github.com/joe-desimone/patriot}}
+    piccolo progetto di ricerca per identificare tecniche di occultamento in memoria (\emph{in-memory stealth}) usando in maniera non standard alcune chiamate di sistema di Windows
+    \item \textbf{Hunt-Sleeping-Beacons},
+    \footnote{\url{https://github.com/thefLink/Hunt-Sleeping-Beacons}}
+    che ha lo scopo di identificare i beacons decompressi a runtime, o in esecuzione nel contesto di altri processi; i beacon sono agenti C\&C (Command and Control) e si osservano beacon che attendono tra loro, andando in sleep e causando ritardo nell'esecuzione, evitando di essere intercettati in una normale analisi statica, usando tecniche di sleep come Foliage, una tecnica di Sleep Obfuscation
+\end{itemize}
+
+Approfondendo quest'ultimo strumento, le tecniche di sleep obfuscation che va a rilevare includono casistiche più tradizionali come \emph{DelayExecution}, in cui un processo agent C2 andrà a richiamare \texttt{Kernel32!Sleep}, che però indirettamente invoca \texttt{Ntdll!NtDelayExecution}, portando il processo in stato di waiting;
+ma anche tecniche più avanzate come \emph{Foliage}, che usano una serie di syscall per ritardare l'esecuzione senza tuttavia transitare per lo stato di DelayExecution, risultando molto meno rilevabili in modi convenzionali, fino a rilevare \emph{Ekko} o implementazioni analoghe ancora più sofisticate.
+
+\subsection{Disponibilità tramite HTTP server}
+Entrambi questi tool vengono forniti dai rispettivi autori come eseguibili precompilati o facilmente compilabili dai sorgenti pubblici con MinGW.
+Questi devono tuttavia essere eseguiti durante l'analisi all'interno della VM guest Windows 7. Per fare ciò, non è stato identificato alcun metodo già fornito da Cuckoo Sandbox, allora è stato realizzato un piccolo server HTTP in Python che, eseguendo sulla VM Ubuntu ed esposto su una porta definita (50001) limitatamente all'interfaccia di rete nominata \emph{enp0s8} condivisa tra le 2 VM VirtualBox.
+
+Per ridurre la superficie di attacco, non si va ad usare il modulo \texttt{http.server} già presente nella libreria standard poiché potrebbe essere vulnerabile ad attacchi Path Traversal o analoghi.
+Come soluzione adottata, si crea un semplice server HTTP che accetta solo richieste GET e, a seconda dell'endpoint, viene scelto il percorso del file da una serie di stringhe hardcoded, così da rendere impossibile Path Traversal in quanto l'input utente non è mai utilizzato per accedere al file, ma viene solo confrontato con una serie di stringhe.
+
+Al contrario, la comunicazione nella direzione inversa, quindi dal guest all'host, è gestita tramite la API di Cuckoo attraverso la funzione \texttt{upload\_to\_host}, dove si può passare il path di un file da copiare e successivamente da esaminare.
+
+\subsection{Esecuzione come plugin Cuckoo}
+Successivamente all'installazione dei tool nell'ambiente di sandbox, è necessario eseguirli e integrarli all'interno del flusso di analisi di Cuckoo.
+Questo è possibile grazie all'implementazione di plugin in Python 2 usando le API della sandbox.
+
+Si compone di due distinte componenti, entrambe da realizzare in Python 2:
+\begin{itemize}
+    \item modulo \textbf{Auxiliary}: esegue nella VM Guest e al termine deve riportare i dati ottenuti alla VM Host per l'analisi
+    \item modulo \textbf{Processing}: esegue nella VM Host e riceve i dati di output forniti dall'auxiliary
+\end{itemize}
+
+Partendo dai moduli auxiliary, molto simili tra loro, lo scopo è scaricare ed eseguire il programma corrispondente del modulo, ripeterlo in loop per rilevare il maggior numero possibile di match, infine organizzare i report eliminando i duplicati e infine riportarlo all'host.
+Questo tipo di moduli è concretizzato in un file Python con una classe custom che estende la classe astratta \texttt{Auxiliary} e implementa i metodi \texttt{start} con cui avviare l'esecuzione e segnala che è il file da analizzare sta per essere avviato, così da dare modo al plugin di predisporre tutti gli strumenti necessari, che siano tool, hook, capture di rete, o altro; e il metodo \texttt{stop} necessario per interrompere e ripulire l'ambiente d'esecuzione.
+Inoltre, siccome il loop di esecuzione continua del tool deve essere non bloccante, altrimenti l'intero flusso di esecuzione dell'agent di Cuckoo viene bloccato, senza di fatto eseguire mai, deve essere delegato in un thread in background.
+Sarà presente un flag che, impostato inizialmente a True prima dell'esecuzione, verrà settato a False durante lo stop del modulo, così da interrompere il thread con una graceful exit.
+Lo standard output (stdout) è conservato dentro un file di log, poi inviato al modulo di Reporting.
+
+\subsection{Parsing dei risultati}
+La parte di analisi del log raccolto è svolta nei moduli di Reporting che, come annunciato, sono eseguiti all'interno della VM host da parte dell'orchestrator.
+Ricevono i dati caricati dall'auxiliary e verranno trasformati in apposite strutture, codificate in formato JSON, restituite nel report finale complessivo poi inviato al client che ha richiesto l'analisi.
+
+Il modo in cui vengono interpretati i risultati è fortemente dipendente dal tool e dal suo output specifico, per cui in questo caso i moduli mostreranno sostanziali differenze date dalla natura dello strumento stesso.
+Di seguito ne analizziamo il comportamento.
+
+\subsubsection{Patriot}
+L'output testuale è dato in input al parser nel formato mostrato in figura \ref{fig:dynamic-patriot-output-text}.
+Si evince facilmente come i dati di nostro interesse siano già mostrati come chiave-valore, dove le chiavi sono gli elementi \texttt{Level}, \texttt{Type}, \texttt{Detail}, \texttt{PID} e \texttt{Process}.
+Sarà sufficiente notare come le varie sezioni sono divise da una serie di trattini e una linea vuota, ossia la sequenza di caratteri \texttt{\textbackslash{}n\textbackslash{}n}. Per ogni riga di ogni sezione, basta dividere tra chiave e valore andando a fare uno split della stringa alla prima occorrenza del carattere \texttt{:} e unendo il tutto dentro un dizionario, poi restituito nell'output trasformato.
+Possono essere rimossi tutti i duplicati, dovuti all'esecuzione in loop dello strumento, come spiegato nella sezione precedente.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=\textwidth]{assets/patriot-example-output.png}
+    \caption{Esempio di output testuale di Patriot}
+    \label{fig:dynamic-patriot-output-text}
+\end{figure}
+
+\subsubsection{Hunt-Sleeping-Beacons}
+Nel caso specifico di questo strumento, siccome l'output è in un formato molto flessibile e può essere espresso in una moltitudine di modi diversi, si è scelto di non trasformarlo in una struttura a dizionario.
+Si è ritenuto notevolmente più utile, ai fini della rilevazione, filtrare unicamente le righe inizianti per \texttt{[!]} le quali indicano la motivazione e il target (nome del processo e PID) di una detection.
+
+\begin{code}
+\begin{minted}{text}
+[!] Suspicious Process: beacon.exe (5296)
+
+   [*] Thread (2968) State: DelayExecution and uses stomped module
+   [*] Potentially stomped module: C:\Windows\SYSTEM32\xpsservices.dll
+
+       NtDelayExecution -> C:\Windows\SYSTEM32\ntdll.dll
+       SleepEx -> C:\Windows\System32\KERNELBASE.dll
+       DllGetClassObject -> C:\Windows\SYSTEM32\xpsservices.dll
+
+   [*] Suspicious Sleep() found
+   [*] Sleep Time: 5s
+\end{minted}
+\label{lst:hunt-sleeping-beacons-example-text}
+\caption{Esempio di output per una detection di Hunt Sleeping Beacons}
+\end{code}
 
 \section{Workflow analisi dinamica}
