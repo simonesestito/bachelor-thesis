@@ -511,9 +511,36 @@ Possono essere rimossi tutti i duplicati, dovuti all'esecuzione in loop dello st
     \label{fig:dynamic-patriot-output-text}
 \end{figure}
 
+\begin{code}
+\begin{minted}{json}
+[
+    {
+        "Level": "suspect",
+        "Type": "peIntegrity",
+        "Detail": "Executable region 000007fefd131000 likely modified",
+        "PID": 2656,
+        "Process": "SDXHelper.exe",
+        "Module path": "\\Windows\\System32\\KernelBase.dll",
+        "Module base": "7fefd130000"
+    },
+    {
+        "Level": "suspect",
+        "Type": "peIntegrity",
+        "Detail": "Executable region 000007feff211000 likely modified",
+        "PID": 2656,
+        "Process": "SDXHelper.exe",
+        "Module path": "\\Windows\\System32\\oleaut32.dll",
+        "Module base": "7feff210000"
+    }
+]
+\end{minted}
+\caption{Esempio di output di Patriot trasformato in JSON dal plugin}
+\end{code}
+
 \subsubsection{Hunt-Sleeping-Beacons}
-Nel caso specifico di questo strumento, siccome l'output è in un formato molto flessibile e può essere espresso in una moltitudine di modi diversi, si è scelto di non trasformarlo in una struttura a dizionario.
+Nel caso specifico di questo strumento, siccome l'output testuale che fornisce è in un formato molto flessibile e può essere espresso in una moltitudine di modi diversi, si è scelto di non trasformarlo in una struttura a dizionario.
 Si è ritenuto notevolmente più utile, ai fini della rilevazione, filtrare unicamente le righe inizianti per \texttt{[!]} le quali indicano la motivazione e il target (nome del processo e PID) di una detection.
+Le righe così ottenute possono essere filtrate eliminando i duplicati e restituendole in output come una lista.
 
 \begin{code}
 \begin{minted}{text}
