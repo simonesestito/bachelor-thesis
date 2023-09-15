@@ -10,14 +10,14 @@ L'analizzatore dinamico, comprensivo della sandbox e di tutto ciò che è descri
 Come nell'analizzatore statico, ritroviamo anche qui tutte le caratteristiche di qualità come la massima flessibilità ed estensibilità con altri strumenti nel corso della sua evoluzione.
 
 L'esecuzione del possibile malware deve avvenire necessariamente in un ambiente isolato e supervisionato, idealmente riducendo a zero le possibilità che possa evadere e infettare il sistema host.
-Non potrà mai esistere un sistema che, in maniera assoluta, permetta l'esecuzione di un programma senza rischi, potendo esistere vulnerabilità zero-day in tutte le componenti coinvolte, senza imporre limitazioni che inficerebbero sull'esito dell'analisi stessa, come disconnettere fisicamente un host reale da tutte le interfacce di rete e distruggere l'ambiente completamente.
+Non potrà mai esistere un sistema che, in maniera assoluta, permetta l'esecuzione di un programma senza rischi, potendo esistere vulnerabilità zero-day in tutte le componenti coinvolte, senza imporre limitazioni che inficerebbero sull'esito dell'analisi stessa, come disconnettere fisicamente un host reale da tutte le interfacce di rete e distruggere l'ambiente completamente al termine.
 Un software predisposto per fare ciò prende il nome di \emph{Sandbox}.
 
 \section{Cuckoo Sandbox}
 Per la realizzazione del progetto è stato adottato \emph{Cuckoo Sandbox}.
 \footnote{\url{https://github.com/cuckoosandbox/cuckoo}}
 Si tratta di un progetto open-source, rilasciato sotto licenza GPLv3 dalla Cuckoo Foundation, leader del settore che fornisce la base su cui lavorare e fare tutte le dovute modifiche del caso.
-Consente di venire a conoscenza dell'esatto comportamento adottato dal malware durante la sua esecuzione, includendo la lista completa delle chiamate di sistema di ogni processo, nonché la cattura del traffico di rete, screenshot della UI durante l'esecuzione e il contenuto dei file creati nel sistema.
+Consente di venire a conoscenza dell'esatto comportamento avuto dal malware durante la sua esecuzione, includendo la lista completa delle chiamate di sistema di ogni processo, nonché la cattura del traffico di rete, screenshot della UI durante l'esecuzione e il contenuto dei file creati nel sistema.
 
 Viene fornito di due componenti: l'\emph{Host} e uno o più \emph{Guest}.
 L'Host, anche chiamato Orchestrator, ha il compito di gestire i Guest, come avviarli, interromperli, analizzare il traffico di rete intercettato e tutta l'interpretazione dei risultati raw ottenuti dal Guest, così da ottenere il report.
@@ -61,13 +61,13 @@ Viene così installato Python 2 manualmente, poi creato un virtual environment (
 Un virtualenv Python è definito dalla Python Enhancement Proposals PEP-405
 \footnote{\url{https://peps.python.org/pep-0405/}}
 e fornisce gli strumenti per creare ambienti isolati tra loro, aventi ognuno le proprie dipendenze, versione dell'interprete e altre caratteristiche per non rompere il resto del sistema o progetti tra loro incompatibili, come in questo caso.
-Per impostare l'uso di una versione diversa da quella di default, si è usato il comando \texttt{virtualenv --python="\$(which python2.7)" VENV\_PATH/.venv}; l'attivazione si realizza con l'esecuzione di \texttt{source .venv/bin/activate} trovandosi all'interno della directory del progetto.
+Per impostare l'uso di una versione diversa da quella di default, si è usato il comando \texttt{virtualenv --python="\$(which python2.7)" VENV\_PATH/.venv}; l'attivazione si realizza con l'esecuzione di \texttt{source .venv/bin/activate} mentre ci si trova all'interno della directory del progetto.
 
 Successivamente alle dipendenze Python, è stato richiesto di installare anche tutta una serie di servizi esterni.
 Il primo è chiaramente VirtualBox internamente alla VM stessa, per procedere con la virtualizzazione innestata.
-Poi sono venuti tutti i servizi necessari per il funzionamento dell'Orchestrator di Cuckoo, come il database PostgreSQL, MongoDB per la cache ed ElasticSearch per la correlazione dei dati. La scelta migliore per questi è stata la realizzazione di un file \texttt{docker-compose.yml} con tutti i servizi necessari e loro configurazioni (come variabili d'ambiente, mount di file o bind di porte di rete sull'interfaccia di loopback), installando perciò solo Docker e Docker Compose nel sistema, per avere massima compatibilità e minori problemi di setup dei servizi.
+Poi sono venuti tutti i servizi necessari per il funzionamento dell'Orchestrator di Cuckoo, come il database PostgreSQL, MongoDB per la cache ed ElasticSearch per la correlazione dei dati. La scelta migliore per questi è stata la realizzazione di un file \texttt{docker-compose.yml} con tutti i servizi necessari e loro configurazioni (come variabili d'ambiente, mount di file o bind di porte di rete sull'interfaccia di loopback), installando perciò solo Docker e Docker Compose nel sistema, per avere massima compatibilità e minori problemi di setup.
 
-Una volta che tutti i servizi accessori sono pronti per essere utilizzati, e dopo aver aggiornato i file di configurazione di Cuckoo per permetterne la raggiungibilità, vanno attivati i servizi di Web interface e REST API.
+Una volta che tutti i servizi accessori sono pronti per essere utilizzati, e dopo aver aggiornato i file di configurazione di Cuckoo per permetterne la raggiungibilità (impostando le variabili d'ambiente, le porte da contattare, etc), vanno attivati i servizi di Web interface e REST API.
 La prima ci servirà solamente in locale sulla VM stessa, non esposta all'esterno, a fini di debug e per un utilizzo iniziale più semplice. La seconda, al contrario, andrà esposta sulla rete interna \emph{cuckoo-net} per permettere alla VM \emph{API Client} di interagirvi. In questa fase di setup iniziale, viene tutto esposto su ogni interfaccia (bind su \texttt{0.0.0.0}) per facilitarne il debug, poi perfezionato durante l'Hardening (sez. \ref{chap:dynamic-vm-hardening}).
 
 \subsection{Creazione delle VM Windows}
@@ -78,14 +78,14 @@ Questo strumento si interfaccia con VirtualBox e consente la creazione di VM in 
 
 Viene assegnata una quantità di risorse paragonabile a un computer di fascia bassa verosimile. Il disco sarà di 128GB, allocato dinamicamente, con 4 core CPU e 2GB di RAM. Consentità un'esecuzione non eccessivamente limitante, senza sprecare troppe risorse, specialmente se si prevede di aumentare la parallelizzazione, come spiegato nella sez. \ref{chap:dynamic-vm-replication}.
 
-Vengono poi installati al loro interno tutta una serie di strumenti di utilità che ci si aspetterebbe di trovare in un normale PC aziendale o personale. Questa caratteristica potrebbe sembrare superflua ma in realtà gioca un ruolo molto importante assieme alle più avanzate tecniche di anti-VM-detection che vedremo nella sezione \ref{chap:dynamic-anti-vm-detection}:
+Vengono poi installati al loro interno tutta una serie di strumenti di utilità che ci si aspetterebbe di trovare in un normale PC aziendale o personale. Questa caratteristica potrebbe sembrare superflua ma in realtà gioca un ruolo molto importante (assieme alle più avanzate tecniche che vedremo nella sezione \ref{chap:dynamic-anti-vm-detection}):
 \begin{itemize}
     \item Serve come prima tecnica superficiale di anti-VM-detection, per cui un malware potrebbe rilevare se ci si trova in un ambiente di test o meno in base alla presenza o assenza di software che la quasi totalità degli utenti reali avrebbe sul proprio computer
     \item Ampia la superficie di attacco possibile sulla macchina Windows, in caso un malware non esegua direttamente il codice che genera danni nel sistema target ma, in maniera più subdola, vada a sfruttare falle di sicurezza presenti in altri programmi che comunemente un utente avrebbe
-    \item Permette l'analisi di file diversi da eseguibili, come DOCX con macro non desiderate o PDF con payload specifici
+    \item Permette l'analisi di file diversi, come DOCX con macro non desiderate o PDF con payload eseguibili
 \end{itemize}
 
-Gli specifici software installati sono:
+Gli specifici software installati e operazioni effettuate sono:
 \begin{itemize}
     \item Adobe PDF Reader
     \item DotNet, Java, Flash e Visual C++ Redistributable 2015: per eseguire programmi che richiedono queste runtime
@@ -97,16 +97,16 @@ Gli specifici software installati sono:
     \item Suite Office
 \end{itemize}
 
-Chiaramente, è stato rigorosamente proibita l'installazione delle VirtualBox Guest Additions, che hanno lo scopo di integrare meglio la VM e fornire più servizi, ossia il contrario dell'obiettivo prefissato.
+Chiaramente, è stata rigorosamente proibita l'installazione delle VirtualBox Guest Additions, che hanno lo scopo di integrare meglio la VM e fornire più servizi, ossia il contrario dell'obiettivo prefissato.
 
 \subsection{Anti-VM detection}
 \label{chap:dynamic-anti-vm-detection}
-Alcuni malware, per rendere più difficoltosa l'analisi in ambienti controllati, quindi rallentare lo sviluppo di un rilevamento accurato e una conseguente mitigazione, adottano tecniche di VM-detection. Se rilevano di essere sotto analisi, non eseguono affatto il comportamento che svolgerebbero su un ambiente reale, sia non compiendo azioni o compiendone di normali. Un esempio può essere un Trojan che, se sotto analisi, eseguirà regolarmente il programma autentico per cui si camuffa, distruggendo il sistema solo in ambienti reali.
+Alcuni malware, per rendere più difficoltosa l'analisi in ambienti controllati, quindi rallentare lo sviluppo di un rilevamento accurato e una conseguente mitigazione, adottano tecniche di VM-detection. Se capiscono di essere sotto analisi, non eseguono affatto il comportamento che svolgerebbero su un ambiente reale, sia non compiendo azioni o compiendone di normali. Un esempio può essere un Trojan che, se sotto analisi, eseguirà regolarmente il programma autentico per cui si camuffa, compromettendo il sistema solo in ambienti reali.
 
-Data la numerosità di queste tecniche, si è reso necessario trovare una PoC che possa eseguirle in maggior numero possibile e restituire un report su quali rilevazioni bisogna intervenire. \emph{Pafish64} è un progetto open source, rilasciato sotto licenza GPLv3 e disponibile su GitHub
+Data la numerosità di queste tecniche, si è reso necessario trovare una PoC che possa eseguirle in maggior numero possibile e restituire un report su quali rilevazioni continuano a dare esito positivo. \emph{Pafish64} è un progetto open source, rilasciato sotto licenza GPLv3 e disponibile su GitHub
 \footnote{\url{https://github.com/a0rtega/pafish}},
 che ha come scopo proprio ciò di cui necessitiamo in questo stadio.
-Procediamo ad eseguire questo test sulle VM realizzate, senza ancora aver adottato alcuna strategia di mitigazione, per individuare dove e come operare. Il risultato, riportato in figura \ref{fig:pafish_standard_vm}, è pessimo: un gran numero di test falliscono, tra cui:
+Procediamo ad eseguire il test sulle VM realizzate, senza ancora aver adottato alcuna strategia di mitigazione, per individuare dove e come operare. Il risultato, riportato in figura \ref{fig:pafish_standard_vm}, è pessimo: un gran numero di test falliscono, tra cui:
 \begin{enumerate}
     \item tutti quelli che verificano la presenza di un potenziale essere umano,
     visualizzando un dialog con un tasto OK e aspettando che qualcuno lo vada a premere
@@ -114,10 +114,10 @@ Procediamo ad eseguire questo test sulle VM realizzate, senza ancora aver adotta
     \item alcuni controlli su aspetti più specifici della CPU
 \end{enumerate}
 
-Come prima strategia, si va ad installare nelle VM le DLL fornite da Cuckoo per fare l'injection delle chiamate di sistema che un processo eseguirà per tali rilevamenti, come nascondere alcuni registri di sistema intercettando le syscall \texttt{RegOpenKeyEx}, o eseguire OCR sullo schermo e muovere il mouse di conseguenza, compiendo azioni banali che un utente eseguirebbe con alta probabilità.
+Come prima strategia, si vanno ad installare nelle VM le DLL fornite da Cuckoo per fare l'hooking delle chiamate di sistema che un processo eseguirà per tali rilevamenti, come nascondere alcuni registri di sistema intercettando le syscall \texttt{RegOpenKeyEx}, o eseguire OCR sullo schermo e muovere il mouse di conseguenza, compiendo azioni banali che un utente eseguirebbe con alta probabilità.
 Appena impostata la DLL injection, viene ripetuto il test. Il risultato è in figura \ref{fig:pafish_cuckoo} e presenta molti meno risultati negativi.
 Tuttavia, non si potrà progredire ulteriormente a causa dell'attuale architettura impostata e della ben maggiore difficoltà che avrebbe la realizzazione di soluzioni di mitigazione più sofisticate, al di fuori dello scopo del progetto qui realizzato.
-Infatti, a titolo esemplificativo, notiamo come l'hypervisor ottenuto leggendo i valori forniti dalla CPU (virtuale) sia \emph{VBoxVBoxVBox}, riconducibile a VirtualBox; questo accade perché valori del genere vengono letti dalla macchina su cui la VM Windows 7 esegue, ma nella configurazione realizzata si tratta a sua volta di VirtualBox, per cui la mitigazione risulta inefficace.
+Infatti, a titolo esemplificativo, notiamo come l'hypervisor ottenuto leggendo i valori forniti dalla CPU (virtuale) sia \emph{VBoxVBoxVBox}, riconducibile a VirtualBox; questo accade perché valori del genere vengono letti dalla macchina su cui la VM Windows 7 esegue, ma nella configurazione realizzata si tratta a sua volta di VirtualBox, per cui la strategia risulta inefficace.
 
 Ci si ritiene però altamente soddisfatti del risultato poiché sono pochissimi i test che falliscono, abbassando la probabilità che un malware da analizzare utilizzi proprio quelli. Non può usarne in gran numero poiché sono rilevabili dalla sanbox tra le syscall eseguite, quindi riportate all'analista che può subito dedurre se si tratti di un comportamento lecito o inaspettato.
 
@@ -125,11 +125,11 @@ Ci si ritiene però altamente soddisfatti del risultato poiché sono pochissimi 
 \centering
 \begin{subfigure}{.5\textwidth}
   \centering
-  \includegraphics[width=.9\linewidth]{assets/pafish_standard_vm_1.png}
+  \includegraphics[width=\linewidth]{assets/pafish_standard_vm_1.png}
 \end{subfigure}%
 \begin{subfigure}{.5\textwidth}
   \centering
-  \includegraphics[width=.9\linewidth]{assets/pafish_standard_vm_2.png}
+  \includegraphics[width=\linewidth]{assets/pafish_standard_vm_2.png}
 \end{subfigure}
 \caption{Pafish eseguito in una classica VM Windows 7}
 \label{fig:pafish_standard_vm}
@@ -139,11 +139,11 @@ Ci si ritiene però altamente soddisfatti del risultato poiché sono pochissimi 
 \centering
 \begin{subfigure}{.5\textwidth}
   \centering
-  \includegraphics[width=.9\linewidth]{assets/pafish_cuckoo_1.png}
+  \includegraphics[width=\linewidth]{assets/pafish_cuckoo_1.png}
 \end{subfigure}%
 \begin{subfigure}{.5\textwidth}
   \centering
-  \includegraphics[width=.9\linewidth]{assets/pafish_cuckoo_2.png}
+  \includegraphics[width=\linewidth]{assets/pafish_cuckoo_2.png}
 \end{subfigure}
 \caption{Pafish eseguito sotto l'analisi di Cuckoo Sandbox}
 \label{fig:pafish_cuckoo}
@@ -153,12 +153,12 @@ Ci si ritiene però altamente soddisfatti del risultato poiché sono pochissimi 
 \label{chap:dynamic-vm-replication}
 Una volta realizzata una istanza della VM Windows 7, per migliorare la scalabilità del sistema,
 quindi permettere che più task possano eseguire in parallelo, 
-si devono creare più istanze replicate della macchina virtuale di sandbox.
+si devono creare più istanze replicate della stessa.
 
 Per deduplicare la base comune a tutte le istanze, come il sistema operativo e i tool installati, si trasforma il disco virtuale da standard a multi-attach, così da essere connesso a più VM in contemporanea.
 
-A livello di rete si assegna un IP statico a ogni VM, così da permettere a Cuckoo di correlare il traffico verso e da un determinato IP locale, a una specifica VM, quindi a uno specifico task di analisi in corso in un determinato istante di tempo.
-Per permettere il forwarding dei pacchetti attraverso questa interfaccia, viene configurata usando il seguente comando:
+A livello di rete si assegna un IP statico a ogni VM, consentendo a Cuckoo di correlare il traffico verso e da un determinato IP locale, a una specifica VM, quindi a uno specifico task di analisi in corso in un determinato istante di tempo.
+Per permettere il forwarding dei pacchetti attraverso questa interfaccia, viene configurata usando il seguente comando a livello di orchestrator:
 \begin{minted}{shell}
 sudo sysctl -w net.ipv4.conf.vboxnet0.forwarding=1
 sudo sysctl -w net.ipv4.conf.enp0s3.forwarding=1
@@ -167,7 +167,7 @@ sudo sysctl -w net.ipv4.conf.enp0s3.forwarding=1
 Infine, si creano le istanze con vmcloak e si eseguono gli snapshot: questi verranno ripristinati subito dopo l'esecuzione di un task di analisi, così da ripartire sempre con lo stesso sistema pulito iniziale e non rischiare che un malware, dopo che infetti la VM, vada a mantenere il controllo della macchina virtuale anche successivamente.
 
 \subsection{Servizi systemd}
-Si nota come al boot, tutti i servizi che precedentemente erano funzionanti, debbano essere eseguiti manualmente. Questo passaggio è totalmente da rimuovere per una corretta automazione del processo, e la soluzione migliore in ambito Linux per eseguire servizi al boot è la creazione di \emph{unit di systemd}. Systemd è un sistema di init e gestione dei servizi, ampiamente diffuso nella quasi totalità delle distribuzioni Linux, che deve eseguire con PID 1 (PID 0 è il processo scheduler, parte del kernel) per il corretto funzionamento. I servizi che deve eseguire sono descritti attraverso dei file posti in \texttt{/etc/systemd/system/} chiamati \textbf{unit}.
+Si nota come al boot, tutti i servizi che precedentemente erano funzionanti, debbano essere eseguiti manualmente. Questo passaggio è totalmente da rimuovere per una corretta automazione del processo, e la soluzione migliore in ambito Linux per eseguire servizi al boot è la creazione di \emph{unit di systemd}. Systemd è un sistema di init e gestione dei servizi, ampiamente diffuso nella quasi totalità delle distribuzioni Linux, che deve eseguire con PID 1 (PID 0 è il processo scheduler, parte del kernel) per il corretto funzionamento. I servizi che deve avviare sono descritti attraverso dei file posti in \texttt{/etc/systemd/system/} chiamati \textbf{unit}.
 Come caratteristiche fondamentali, una unit conterrà:
 \begin{itemize}
     \item Un nome, dato dal file stesso, e una descrizione per permetterne il riconoscimento in futuro
@@ -183,7 +183,7 @@ Vengono così create le seguenti unit:
     \item \texttt{vboxnet0.service} contiene il comando per creare e avviare preventivamente l'interfaccia di rete
     che useranno Cuckoo e le VM Guest per dialogare e far transitare il traffico di rete da sniffare
     \item \texttt{cuckoo-docker.service} avvia tutti i servizi accessori che Cuckoo
-    necessita per il funzionamento, come i database e il resto menzionato in \ref{chap:cuckoo-installation-configuration-services},
+    necessita per il funzionamento, come i database, menzionati in \ref{chap:cuckoo-installation-configuration-services},
     tramite un file Docker Compose
     \item \texttt{cuckoo.service}, che avvierà il demone di Cuckoo una volta che le dipendenze saranno pronte all'uso
     \item \texttt{cuckoo-api.service}, responsabile del server di REST API usato poi dal client esterno a questa VM
@@ -238,23 +238,24 @@ Seguendo l'architettura desiderata in figura \ref{fig:cuckoo_vms_architecture},
 si procede alla realizzazione della API Client VM.
 Questa deve rispettare una serie di caratteristiche, come l'isolamento e la leggerezza, non contenendo particolari software.
 
-Dovrà includere un programma client, scritto in Python, realizzato da zero per il progetto, utile sia come vero e proprio client che come Proof-of-Concept per una futura integrazione con le API della Threat Intelligence. Questo, infatti, interagisce direttamente con le REST API esposte da Cuckoo, esegue il parsing dei risultati e la modellazione delle chiamate API in distinti metodi di una classe per astrarne l'implementazione.
-Essendo già così suddiviso, rende possibile la scrittura di un altro programma Python per essere usato in un diverso ambiente, riciclando il codice relativo alle chiamate REST. Ciò porta a un risparmio di risorse umane per futuri sviluppi e alla minor introduzione di bug, riutilizzando codice già testato in precedenza.
+Dovrà includere un programma client, scritto in Python, realizzato da zero per il progetto, utile sia come vero e proprio client che come Proof-of-Concept per una futura integrazione con le API della Threat Intelligence. Questo, infatti, interagisce direttamente con le REST API esposte da Cuckoo, esegue il parsing dei risultati e la modellazione delle chiamate in distinti metodi di una classe per astrarne l'implementazione.
+Essendo già così suddiviso, rende possibile la scrittura di un altro programma Python per essere usato in un diverso ambiente, riciclando il codice relativo alle chiamate REST. Ciò porta a un risparmio di risorse umane per futuri sviluppi e alla minor probabilità di introdurre bug, riutilizzando codice già testato in precedenza.
 
 Il Client può essere usato come libreria o essere eseguito direttamente da terminale come modulo (\texttt{python3 -m cuckoo-api-client ARGS...}), passando diverse possibili opzioni, tra cui l'analisi di un file o di un'intera cartella, e l'impostazione di un path dove andare a salvare tutti gli output.
-Questi output consistono nel report JSON elaborato, nonché gli screenshot dell'esecuzione e il file pcap con la cattura dei pacchetti di rete.
+Questi ultimi consistono nel report JSON elaborato, nonché gli screenshot dell'esecuzione e il file pcap con la cattura dei pacchetti di rete.
 Per agevolarne l'usabilità, fornisce messaggi di errore e di help tramite l'ausilio del modulo \texttt{argparse}, e durante l'esecuzione mostra output colorato e in costante aggiornamento sullo stato dei task, che siano in coda, terminati o pendenti.
 
-La VM ne conterrà una copia già al suo interno, così da ridurre dipendenze esterne o necessità di mount di cartelle dall'host fisico. Per la massima leggerezza, è basata su Arch Linux con installate solo le dipendenze strettamente necessarie per il funzionamento, e XFCE come Desktop Environment leggero per la visualizzazione di screenshot o altri file che possono essere più comodamente aperti utilizzando programmi con una GUI. Grazie a questa scelta, è stato possibile mantenere la dimensione della macchina virtuale, esportata come file OVA, inferiore a 3GB.
+La VM ne conterrà una copia già al suo interno, così da ridurre dipendenze esterne o necessità di mount di cartelle dall'host fisico. Per la massima leggerezza, è basata su Arch Linux con installate solo le dipendenze strettamente necessarie per il funzionamento, e XFCE come Desktop Environment minimale per la visualizzazione di screenshot o altri file che possono essere più comodamente aperti utilizzando programmi con una GUI. Grazie a questa scelta, è stato possibile mantenere la dimensione della macchina virtuale, esportata come file OVA, inferiore a 3GB.
 
 Avrà un indirizzo IP statico per facilitarne la raggiungibilità e sarà connessa all'interfaccia di rete interna \emph{"cuckoo-net"}, come descritto nell'architettura.
 
 \subsection{Nuovo formato del report}
 \label{sez:dynamic-report-new-format}
-Dopo una prima analisi del report originale, così come elaborato da Cuckoo, ci si è resi conto della sua bassa consultabilità, risultando eccessivamente lungo e dispersivo. Inoltre, alcune voci non sono ben organizzate, come le syscall intercettate che non presentano una chiara distinzione tra i vari thread del processo ma sono elencate tutte assieme. Questo comporta che, in caso di due o più thread che eseguono operazioni distinte, non è facile ricostruire il flusso logico semplicemente leggendo questo elenco, poiché i vari flussi sarebbero uniti.
+Dopo una prima osservazione del report originale, così come elaborato da Cuckoo, ci si è resi conto della sua bassa consultabilità, risultando eccessivamente lungo e dispersivo. Inoltre, alcune voci non sono ben organizzate, come le syscall intercettate che non presentano una chiara distinzione tra i vari thread del processo ma sono elencate tutte assieme. Questo comporta che, in caso di due o più thread che eseguono operazioni distinte, non è facile ricostruire il flusso logico semplicemente leggendo questo elenco, poiché i vari flussi sarebbero uniti.
 Per questa e altre ragioni di comodità da parte dell'analista, oltre a motivazioni più tecniche dovute alla struttura del JSON con cui generalmente lavora la Threat Intelligence, si è optato per eseguire una trasformazione lato client.
 
-Per prima cosa, viene studiata la struttura del JSON fornito da Cuckoo per capire come e dove intervenire. Nel primo livello, si tratta di un oggetto (e non una lista), con diverse chiavi: questa caratteristica risulta utile, infatti restituire come dato un oggetto rende successivi aggiornamenti o aggiunte alla struttura dati molto più agevole.
+Per prima cosa, viene studiata la struttura del JSON fornito da Cuckoo per capire come e dove intervenire. Nel primo livello, si tratta di un oggetto (e non una lista), con diverse chiavi. 
+Questa caratteristica risulta utile: restituire come dato un oggetto rende successivi aggiornamenti o aggiunte alla struttura dati molto più agevole, rispetto a una lista o altre strutture più basilari.
 Le prime chiavi che sono ben strutturate e andremo a ricopiare nel report trasformato sono i metadati (\texttt{target} e \texttt{task\_info}), i dati sugli screenshot e le stringhe individuate nel file.
 Le sezioni dov'è richiesto il maggior intervento per organizzare meglio, secondo le esigenze, sono quella relativa ai processi e syscall, e l'area di network con le analisi del traffico di rete.
 
@@ -269,12 +270,13 @@ Il nuovo report conterrà la seguente struttura:
 
 La sezione riguardante il traffico di rete, vede una divisione (prima non presente) tra le categorie di traffico e protocollo usato, come HTTP, HTTPS, TCP con protocollo applicazione custom, SMTP per invio di mail, richieste DNS, UDP o altri protocolli supportati. La divisione, inoltre, serve a far ignorare all'analista tutto ciò che non è rilevante, focalizzandosi su elementi anomali, come una calcolatrice che invia traffico SMTP verso un server con IP non conosciuto.
 Per tutti i protocolli, sono riportati gli indirizzi IP sorgente e destinazione, da cui possiamo dedurre sia l'interlocutore che la direzione della comunicazione, così come le porte coinvolte e il timestamp di esecuzione.
-Protocolli di livello applicazione, come HTTP, contengono informazioni già elaborate. Nel caso di HTTP, viene restituita una struttura dati ad oggetto dove sono già presenti in maniera ordinata i vari header, lo status code e il body di richiesta (se presente) o risposta.
+Protocolli di livello applicazione, come HTTP, contengono informazioni già elaborate.
+Proprio in questo caso d'esempio, viene restituita una struttura dati ad oggetto dove sono già presenti in maniera ordinata i vari header, lo status code e il body di richiesta (se presente) o risposta.
 Se possibile, vengono decrittate le comunicazioni TLS, sia con metodologie MITM (man-in-the-middle, sconsigliato e rilevabile dal processo con tecniche quali il Certificate Pinning) che leggendo dai buffer che vengono inviati alle syscall durante queste operazioni, a patto che non abbia linking statico alle librerie OpenSSL e simili, ma usi le syscall fornite dal sistema operativo e poi intercettate da Cuckoo Sandbox.
 
-Una caratteristica che va tenuta a mente quando si analizzano i risultati della parte di networking è che si basano principalmente sul traffico catturato ascoltando l'interfaccia di rete. Come conseguenza di ciò, emerge come nel risultato siano presenti pacchetti verso host che il processo sotto analisi non ha mai tentato di contattare, ma che il resto del sistema ha interrogato per altre sue funzioni.
+Una caratteristica che va tenuta a mente quando si analizzano i risultati della parte di networking è che si basano principalmente sul traffico catturato ascoltando l'interfaccia di rete. Come conseguenza di ciò, emerge come nel risultato siano presenti anche pacchetti che il processo sotto analisi non ha mai inviato o ricevuto, ma attribuibili ad altri processi all'interno del sistema, come software di Microsoft che eseguono operazioni di routine (ricerca di update del sistema operativo, etc...).
 Da un lato può essere visto come un punto a favore, così che se per qualche vulnerabilità di programmi di sistema, venisse effettuato traffico di rete malevolo partendo proprio da questi, sarebbe comunque rilevato e analizzato dall'analista. In maniera speculare però è un punto a sfavore l'aver il risultato dell'analisi meno pulito e con elementi superflui.
-Si è scelto di rimandare tale decisione all'analista ora e al sistema di Threat Intelligence poi, ad esempio eseguendo una analisi di un programma mockup che non esegua alcuna operazione di rete, per estrarre così il traffico che ci possiamo aspettare da altre future analisi. Ai fini del progetto, vengono conservati tutti i pacchetti.
+Si è scelto, allo stato attuale, di rimandare tale decisione all'analista e al sistema di Threat Intelligence poi, ad esempio eseguendo una analisi di un programma mockup che non esegua alcuna operazione di rete, per estrarre così il traffico che ci possiamo aspettare da altre future analisi. Ai fini del progetto, vengono conservati tutti i pacchetti.
 
 \newpage
 \begin{code}
@@ -417,10 +419,11 @@ Si è scelto di rimandare tale decisione all'analista ora e al sistema di Threat
 \section{Hardening}
 \label{chap:dynamic-vm-hardening}
 Un sistema di sandbox è molto delicato e deve essere protetto adeguatamente.
-La VM dove eseguono Cuckoo e le VM guest innestate rappresentano il punto critico, dato che una loro errata configurazione potrebbe aprire le porte all'attaccante verso l'intero sistema host ed evadere così dalla sandbox.
+La VM dove eseguono Cuckoo e i guest innestati rappresentano il punto critico, dato che una loro errata configurazione potrebbe aprire le porte all'attaccante verso l'intero sistema host ed evadere così dalla sandbox.
+Adotteremo il principio del minimo privilegio (Principle of Least Privilege - PoLP).
 
-A livello di rete, si è notato come un processo interno alla sandbox (Windows 7) possa riuscire a contattare con successo altri dispositivi nella LAN del sistema host fisico. Questo deve essere chiaramente proibito, poiché un malware dalla sandbox potrebbe scoprire e attaccare altri dispositivi vulnerabili nella propria rete domestica o aziendale.
-Per far ciò, vengono impostate delle regole precise di IPTables. Useremo il programma \texttt{ufw} per applicare le regole, dato che sotto la scocca usa comunque IPTables ma con un'interfaccia per l'utente molto più intuitiva, restando pur sempre su CLI.
+A livello di rete, si è notato come un processo interno alla sandbox (Windows 7) possa riuscire a contattare con successo altri dispositivi nella LAN del sistema host fisico. Questo deve essere chiaramente proibito, poiché un malware potrebbe scoprire e attaccare altri dispositivi vulnerabili nella propria rete domestica o aziendale.
+Per far ciò, vengono impostate delle regole precise di IPTables. Useremo il programma \texttt{ufw} per applicare le regole, dato che sotto la scocca usa comunque IPTables ma con un'interfaccia per l'utente molto più intuitiva e meno error-prone, restando pur sempre su CLI.
 Blocchiamo, dalla VM cuckoo più esterna, tutto il traffico verso l'host (interfaccia \texttt{enp0s3}) che sia indirizzato a classi di IP privati. Nell'esempio di seguito, applichiamo la regola per proibire di raggiungere tutti i dispositivi in una rete con indirizzi privati di classe C; verrà replicato per tutte le altre classi di indirizzi da bloccare.
 
 \begin{minted}{shell}
@@ -428,14 +431,14 @@ sudo ufw deny out on enp0s3 to 192.168.0.0/16
 sudo ufw enable && sudo ufw reload
 \end{minted}
 
-Per quanto riguarda il gateway, dobbiamo consentire il traffico che transita verso di esso, ma non direttamente a lui destinato. La regola è applicabile con il seguente comando di ufw, dove \texttt{10.0.2.2} è l'indirizzo IP del gateway, concretizzato nell'host VirtualBox:
+Per quanto riguarda il gateway, dobbiamo consentire il traffico che transita verso di esso, ma non direttamente a lui destinato. La regola è applicabile con il seguente comando di ufw, dove \texttt{10.0.2.2} è l'indirizzo IP del gateway, concretizzato nell'host fisico dove gira VirtualBox:
 
 \begin{minted}{shell}
 sudo ufw deny out on enp0s3 to 10.0.2.2
 \end{minted}
 
 La comunicazione tra la VM di analisi e la VM client, che transita sull'interfaccia di rete interna di VirtualBox denominata \texttt{cuckoo-net}, poi assegnata al sistema con nome \texttt{enp0s8}, deve essere controllata.
-Ricordando che le due macchine hanno assegnati i propri IP statici, dobbiamo limitare il traffico facendo sì che solo la VM client sia in grado di aprire una connessione verso l'analizzatore, limitatamente alla porta 8080. Oltre a limitare sul client tutte le connessioni in ingresso a livello di firewall, anche se esista una porta aperta con bind su 0.0.0.0 (tutte le interfacce), va applicata la seguente regola sull'analizzatore:
+Ricordando che le due macchine hanno assegnati i propri IP statici, dobbiamo limitare il traffico facendo sì che solo la VM client sia in grado di aprire una connessione verso l'analizzatore, limitatamente alla porta 8080. Oltre a limitare sul client tutte le connessioni in ingresso a livello di firewall, anche se esista una porta aperta con bind su 0.0.0.0 (tutte le interfacce), va applicata la seguente regola sull'analizzatore, tenendo \texttt{deny} come azione di default per il traffico in ingresso:
 \begin{minted}{shell}
 sudo ufw allow in \
     on enp0s8 \
@@ -443,10 +446,10 @@ sudo ufw allow in \
     port 8080 proto tcp \
     from 192.168.50.12
 \end{minted}
-questa permette il traffico in ingresso, solo sulla porta 8080 dove è in ascolto il server REST API di Cuckoo, tramite una connessione TCP, dall'interfaccia di rete condivisa e isolata tra le due macchine, unicamente dall'indirizzo IP statico a lei assegnato.
+questa permette comunicazioni solo sulla porta 8080 dove è in ascolto il server REST API di Cuckoo, tramite una connessione TCP, dall'interfaccia di rete condivisa e isolata tra le due macchine, unicamente dall'indirizzo IP statico a lei assegnato.
 
 Oltre alla rete, si vuole proteggere anche tutto l'ambiente di esecuzione interno all'analizzatore, quindi si è creato un utente Unix distinto, denominato \texttt{cuckoo}, da cui lanciamo VirtualBox e non dispone di alcun permesso, tantomeno è nel gruppo sudo (i cosiddetti \emph{sudoers}). La sua password è bloccata e la shell è impostata a \texttt{/usr/bin/nologin} così da inibirne completamente l'accesso.
-Per l'avvio però è presente un utente \texttt{pc} che può eseguire il programma di VirtualBox e aprire una shell come utente \texttt{cuckoo} utilizzando sudo:
+Per l'avvio però è presente un utente \texttt{pc} che può eseguire il programma di VirtualBox e aprire una shell impersonando l'utente meno privilegiato utilizzando sudo:
 \begin{minted}{shell}
 xhost +SI:localuser:cuckoo
 sudo -u cuckoo virtualbox
@@ -454,7 +457,7 @@ sudo -u cuckoo virtualbox
 Il comando di \texttt{xhost} si è reso necessario per far sì che anche la GUI del programma possa essere correttamente visualizzata. XHost è una utility del server grafico X, e con questo comando si autorizza l'utente meno privilegiato a contattarlo per mostrare finestre o altri elementi visivi nella sessione dell'utente corrente.
 
 \section{Plugin aggiuntivi}
-Si è optato per estendere la sandbox, integrando altri software più innovativi e fornire una metodologia standard per un'integrazione di ulteriori strumenti.
+Si è optato per estendere la sandbox, integrando altri software più innovativi e fornire una metodologia standard per un'integrazione di ulteriori strumenti in futuro.
 I tool in questione richiesti sono:
 \begin{itemize}
     \item \textbf{Patriot},
@@ -462,13 +465,13 @@ I tool in questione richiesti sono:
     piccolo progetto di ricerca per identificare tecniche di occultamento in memoria (\emph{in-memory stealth}) usando in maniera non standard alcune chiamate di sistema di Windows
     \item \textbf{Hunt-Sleeping-Beacons},
     \footnote{\url{https://github.com/thefLink/Hunt-Sleeping-Beacons}}
-    che ha lo scopo di identificare i beacons decompressi a runtime, o in esecuzione nel contesto di altri processi; i beacon sono agenti C\&C (Command and Control) e si osservano beacon che attendono tra loro, andando in sleep e causando ritardo nell'esecuzione, evitando di essere intercettati in una normale analisi statica, usando tecniche di sleep come Foliage, una tecnica di Sleep Obfuscation
+    che ha lo scopo di identificare i beacons decompressi a runtime, o in esecuzione nel contesto di altri processi; si tratta di agenti C\&C (Command and Control) e si osservano beacon che attendono tra loro, andando in sleep e causando ritardo nell'esecuzione, evitando di essere intercettati in una normale analisi tradizionale
 \end{itemize}
 
-Approfondendo quest'ultimo strumento, le tecniche di sleep obfuscation che va a rilevare includono casistiche più tradizionali come \emph{DelayExecution}, in cui un processo agent C2 andrà a richiamare \texttt{Kernel32!Sleep}, che però indirettamente invoca \texttt{Ntdll!NtDelayExecution}, portando il processo in stato di waiting;
+Approfondendo quest'ultimo strumento, le tecniche di sleep obfuscation che va a rilevare includono casistiche come \emph{DelayExecution}, in cui un processo agent C2 andrà a richiamare \texttt{Kernel32!Sleep}, che però indirettamente invoca \texttt{Ntdll!NtDelayExecution}, portando il processo in stato di waiting;
 ma anche tecniche più avanzate come \emph{Foliage}, che usano una serie di syscall per ritardare l'esecuzione senza tuttavia transitare per lo stato di DelayExecution, risultando molto meno rilevabili in modi convenzionali, fino a rilevare \emph{Ekko} o implementazioni analoghe ancora più sofisticate.
 
-\subsection{Disponibilità tramite HTTP server}
+\subsection{Download durante l'analisi}
 Entrambi questi tool vengono forniti dai rispettivi autori come eseguibili precompilati o facilmente compilabili dai sorgenti pubblici con MinGW.
 Questi devono tuttavia essere eseguiti durante l'analisi all'interno della VM guest Windows 7. Per fare ciò, non è stato identificato alcun metodo già fornito da Cuckoo Sandbox, allora è stato realizzato un piccolo server HTTP in Python che, eseguendo sulla VM Ubuntu ed esposto su una porta definita (50001) limitatamente all'interfaccia di rete nominata \emph{enp0s8} condivisa tra le 2 VM VirtualBox.
 
@@ -487,7 +490,7 @@ Si compone di due distinte componenti, entrambe da realizzare in Python 2:
     \item modulo \textbf{Processing}: esegue nella VM Host e riceve i dati di output forniti dall'auxiliary
 \end{itemize}
 
-Partendo dai moduli auxiliary, molto simili tra loro, lo scopo è scaricare ed eseguire il programma corrispondente del modulo, ripeterlo in loop per rilevare il maggior numero possibile di match, infine organizzare i report eliminando i duplicati e infine riportarlo all'host.
+Partendo dai moduli auxiliary, molto simili tra loro, lo scopo è scaricare ed eseguire il programma corrispondente del modulo, ripeterlo in loop per collezionare il maggior numero possibile di match, infine organizzare i report eliminando i duplicati e riportarlo all'host.
 Questo tipo di moduli è concretizzato in un file Python con una classe custom che estende la classe astratta \texttt{Auxiliary} e implementa i metodi \texttt{start} con cui avviare l'esecuzione e segnala che è il file da analizzare sta per essere avviato, così da dare modo al plugin di predisporre tutti gli strumenti necessari, che siano tool, hook, capture di rete, o altro; e il metodo \texttt{stop} necessario per interrompere e ripulire l'ambiente d'esecuzione.
 Inoltre, siccome il loop di esecuzione continua del tool deve essere non bloccante, altrimenti l'intero flusso di esecuzione dell'agent di Cuckoo viene bloccato, senza di fatto eseguire mai, deve essere delegato in un thread in background.
 Sarà presente un flag che, impostato inizialmente a True prima dell'esecuzione, verrà settato a False durante lo stop del modulo, così da interrompere il thread con una graceful exit.
@@ -495,8 +498,9 @@ Lo standard output (stdout) è conservato dentro un file di log, poi inviato al 
 
 \subsection{Parsing dei risultati}
 La parte di analisi del log raccolto è svolta nei moduli di Reporting che, come annunciato, sono eseguiti all'interno della VM host da parte dell'orchestrator.
-Ricevono i dati caricati dall'auxiliary e verranno trasformati in apposite strutture, codificate in formato JSON, restituite nel report finale complessivo poi inviato al client che ha richiesto l'analisi.
+Sono delle classi che estendono la classe astratta \texttt{Reporting} e devono implementare il metodo \texttt{run()} che restituirà al chiamante la struttura da inserire nel report finale.
 
+Ricevono i dati caricati dall'auxiliary e verranno trasformati in apposite strutture, codificate in formato JSON, restituite nel report finale complessivo poi inviato al client che ha richiesto l'analisi.
 Il modo in cui vengono interpretati i risultati è fortemente dipendente dal tool e dal suo output specifico, per cui in questo caso i moduli mostreranno sostanziali differenze date dalla natura dello strumento stesso.
 Di seguito ne analizziamo il comportamento.
 
