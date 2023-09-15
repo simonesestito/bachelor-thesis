@@ -233,6 +233,7 @@ WantedBy=multi-user.target
 \end{figure}
 
 \section{VM Client con CLI}
+\label{sez:dynamic-python-client-vm}
 Seguendo l'architettura desiderata in figura \ref{fig:cuckoo_vms_architecture},
 si procede alla realizzazione della API Client VM.
 Questa deve rispettare una serie di caratteristiche, come l'isolamento e la leggerezza, non contenendo particolari software.
@@ -249,6 +250,7 @@ La VM ne conterrà una copia già al suo interno, così da ridurre dipendenze es
 Avrà un indirizzo IP statico per facilitarne la raggiungibilità e sarà connessa all'interfaccia di rete interna \emph{"cuckoo-net"}, come descritto nell'architettura.
 
 \subsection{Nuovo formato del report}
+\label{sez:dynamic-report-new-format}
 Dopo una prima analisi del report originale, così come elaborato da Cuckoo, ci si è resi conto della sua bassa consultabilità, risultando eccessivamente lungo e dispersivo. Inoltre, alcune voci non sono ben organizzate, come le syscall intercettate che non presentano una chiara distinzione tra i vari thread del processo ma sono elencate tutte assieme. Questo comporta che, in caso di due o più thread che eseguono operazioni distinte, non è facile ricostruire il flusso logico semplicemente leggendo questo elenco, poiché i vari flussi sarebbero uniti.
 Per questa e altre ragioni di comodità da parte dell'analista, oltre a motivazioni più tecniche dovute alla struttura del JSON con cui generalmente lavora la Threat Intelligence, si è optato per eseguire una trasformazione lato client.
 
@@ -561,3 +563,37 @@ Le righe così ottenute possono essere filtrate eliminando i duplicati e restitu
 \end{code}
 
 \section{Workflow analisi dinamica}
+Successivamente alla creazione dei singoli elementi, riassumiamo l'intero workflow finale di un processo di analisi dinamica.
+
+In primo luogo, sarà richiesto avviare la VM denominata \emph{Ubuntu-cuckoo} in background, senza necessitare dell'uso della UI o di altre interazioni, se non in caso di debugging. Grazie ai servizi systemd creati, è stato reso automatico l'intero avvio, così da non richiedere alcun intervento manuale.
+
+Stando all'architettura indicata a inizio capitolo in figura \ref{fig:cuckoo_vms_architecture}, i malware samples risiedono nella VM \emph{API client}. Per l'attuale configurazione, vengono salvati o direttamente nella VM o in locale sull'host, in una cartella montata nella macchina virtuale in sola lettura; ricordando i rischi identificati nella sezione relativa all'hardening, si è valutato questo come il miglior compromesso tra sicurezza e comodità d'utilizzo, rispetto ad altre soluzioni come connettere questa VM direttamente ad Internet o all'host via servizi di rete.
+
+Avviate entrambe le macchine virtuali costruite, si va ad interagire con la macchina client avviando un terminale ed eseguendo il programma Python client sviluppato su misura (sez. \ref{sez:dynamic-python-client-vm}).
+Prenderà come argomenti il file o la cartella con uno o più sample da analizzare, nonché la cartella dove salvare gli output.
+Per ridurre il più possibile l'utilizzo dell'input utente nelle fasi di analisi, si è deciso di salvare l'output in una sottocartella avente per nome l'impronta SHA256 del file, e non il filename originale.
+Infatti, in caso di errori in una futura automazione, nell'evenienza di una vulnerabilità del filesystem, usare il nome del file così come ricevuto potrebbe allargare la superficie di attacco della sandbox.
+Inoltre, presenta il grande vantaggio di raggruppare nella stessa directory i risultati di più analisi relative allo stesso file, seppur ricevuto con nomi distinti, ad esempio \emph{malware.exe} e \emph{malware (1).exe}.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=\textwidth]{assets/dynamic-api-client-running.png}
+    \caption{Output del client Python durante l'esecuzione dei task}
+    \label{fig:dynamic-api-client-running}
+\end{figure}
+
+I risultati finali, contenuti in questa cartella, saranno di 3 tipi:
+\begin{itemize}
+    \item Il report JSON complessivo del behaviour, già trasformato nel nuovo formato descritto nella sez. \ref{sez:dynamic-report-new-format}
+    \item Gli screenshot scattati durante l'esecuzione del sample, in caso mostri degli elementi grafici
+    \item Il file PCAP di cattura di rete contenenti tutti i pacchetti transitati sull'interfaccia che collega la VM a Internet, tramite l'host fisico che opera da gateway
+\end{itemize}
+
+Al fine di distinguere risultati relativi allo stesso sample ma eseguiti in momenti differenti, i file avranno come prefisso il timestamp di avvio del task.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=\textwidth]{assets/dynamic-api-results.png}
+    \caption{File dei risultati per i vari sample}
+    \label{fig:dynamic-api-results}
+\end{figure}
