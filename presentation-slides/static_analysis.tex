@@ -14,15 +14,6 @@ Usiamo \emph{capa}, strumento open source realizzato da Mandiant
 Molto flessibile, con la possibilità di scrivere proprie regole custom in YAML
 \end{frame}
 
-\begin{frame}{Regole}
-\begin{figure}
-    \centering
-    \includegraphics[width=0.6\textwidth]{images/capa_example_rule.png}
-    \caption{Esempio di regola di capa}
-    \label{fig:capa_example_rule}
-\end{figure}
-\end{frame}
-
 \begin{frame}{Capabilities ottenute}
 \begin{figure}
     \centering
@@ -55,8 +46,8 @@ Lavoreremo sempre con formato JSON per essere sia human-readable dall'analista c
 Viene fatta analisi statica del codice per estrarre le capabilities.
 
 Questo non funziona nei casi di eseguibile pacchettizzato, installer o con runtime particolari (es: Visual Basic).
-
-capa terminerà con exit code 14
+\vfill
+capa terminerà con \textbf{exit code 14}
 \end{frame}
 
 \begin{frame}{Conseguenze del crash}
