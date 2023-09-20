@@ -1,0 +1,27 @@
+\documentclass{beamer}
+\usepackage{amsfonts,amsmath,oldgerm}
+\usetheme{sintef}
+
+\newcommand{\testcolor}[1]{\colorbox{#1}{\textcolor{#1}{test}}~\texttt{#1}}
+
+\usefonttheme[onlymath]{serif}
+
+\titlebackground*{assets/background}
+
+\newcommand{\hrefcol}[2]{\textcolor{cyan}{\href{#1}{#2}}}
+
+\title{Automazione dell'analisi statica e dinamica di malware}
+\subtitle{}
+\course{Laurea in Informatica}
+\author{\href{mailto:sestito.1937764@studenti.uniroma1.it}{Simone Sestito}}
+\IDnumber{1937764}
+\date{Anno Accademico 2022/2023}
+
+\begin{document}
+\maketitle
+
+\include{introduction}
+\include{static_analysis}
+
+\backmatter
+\end{document}
