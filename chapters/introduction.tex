@@ -1,9 +1,9 @@
 \chapter{Introduzione}
 
 \section{Malware e tipologie}
-Nell'ambito della sicurezza informatica, un malware è definito come un software che attua comportamenti malevoli contrari alla volontà dell'utente finale con lo scopo di modificare il normale funzionamento di un sistema, a illegittimo vantaggio del suo autore e ai danni dell'utente \cite{malwarebytes_malware_definition}.
+Nell'ambito della sicurezza informatica, un malware è definito come un programma che è inserito in un sistema, di solito di nascosto, con l'intento di compromettere la confidenzialità, l'integrità e la disponibilità dei dati della vittima, o sue applicazione, fino al sistema operativo, o in altro modo infastidire o disturbare la vittima \cite{Souppaya2013}.
 
-Possono essere di varie tipologie, o unioni di alcune di esse:
+Possono essere di varie tipologie, o unioni di alcune di esse: \cite{crowdstrike_malware_types}
 \begin{itemize}
     \item \textbf{Adware}: progettati per presentare messaggi pubblicitari e guadagnare da essi
     \item \textbf{Spyware}: hanno lo scopo di osservare le azioni dell'utente senza il suo permesso per poi riportare il tutto all'autore
@@ -12,13 +12,21 @@ Possono essere di varie tipologie, o unioni di alcune di esse:
     \item \textbf{Trojan}: ingannano l'utente presentandosi come un software utile, che quindi l'utente va ad installare volontariamente, non sapendo cosa si cela realmente al contrario di ciò che gli è stato promesso
     \item \textbf{Ransomware}: guadagnano sul malcapitato criptando tutti i propri file importanti, chiedendo poi un riscatto in criptovalute per lo sblocco - qui si fa leva sull'importanza e l'assenza di backup di dati importanti e sul proprio valore sia economico che morale (a seconda che si tratti di un'azienda o di un utente domestico)
     \item \textbf{Rootkit}: sfruttano vulnerabilità nel sistema target per ottenere privilegi da amministratore
+    \item \textbf{Fileless Malware}: non installa alcunché sulla macchina inzialmente, ma apporta cambiamenti a file nativi del sistema operativo, come qualche DLL essenziale; un esempio è \emph{Astaroth}
+    \item \textbf{Keylogger}: monitora l'attività dell'utente, generalmente focalizzandosi sull'input da tastiera, al fine di ottenere tanti dati tra cui le password, i nomi utente e i siti visitati, siccome anch'essi vengono digitati dall'utente; ad esempio \emph{Olympic Vision} aveva come target dei businessmen e attaccava le loro caselle di posta elettronica aziendali
+    \item \textbf{Bot}: un software installato nel sistema che resta dormiente nell'attesa di intraprendere un'azione generalmente inviata da remoto dal creatore a tutti i dispositivi infettati, che faranno così parte di una botnet
+    \item \textbf{Wiper}: differisce dai ransomware per la loro natura di eliminazione dei dati utente, anziché la loro criptazione dietro riscatto, come ad esempio \emph{WhisperGate}
+    \item \textbf{Logic Bomb}: un set di istruzioni incluso in un programma, che contiene un payload pericoloso ma che è innescato solo se certe specifiche condizioni logiche sono verificate, come un orario ben preciso o la presenza di software; questo verrà trattato anche nella Sandbox realizzata in merito a pratiche di anti VM detection
 \end{itemize}
-Com'è normale pensare, non esistono solo questi tipi, ma sono solo alcuni dei più famosi.
+Com'è normale pensare, non esistono solo questi tipi, ma sono solo alcuni dei più diffusi e conosciuti.
 
 Infine, per maggiore comprensione delle seguenti illustrazioni, è bene spiegare altri pochi termini:
 \begin{itemize}
-    \item Una \textbf{vulnerabilità} è rappresentata da una criticità in un componente di un sistema informatico, come l'assenza di misure di sicurezza o la propria compromissione
+    \item Una \textbf{vulnerabilità} è una falla o una debolezza nella progettazione, implementazione o gestione di un sistema, che potrebbe essere sfruttato per violare la sicurezza del sistema stesso \cite{rfc4949}
     \item Un \textbf{exploit} invece è un software o un insieme di comandi che vanno a sfruttare la vulnerabilità a proprio vantaggio, al fine di provocare un comportamento altrimenti inaspettato
+    \item Si definisce \textbf{threat} un pericolo di invasione della sicurezza, che esiste quando c'è una circostanza, una capacità,
+    un'azione o un evento che potrebbe compromettere la sicurezza e causare un danno.
+    In altre parole, è un possibile pericolo che potrebbe essere sfruttata una vulnerabilità. \cite{rfc4949}
     \item Un tipo particolare di exploit chiamato \textbf{zero-day} va a sfruttare falle non note prima dell'attacco, provocando così potenzialmente molti più danni, non essendo ancora disponibile una patch del software vulnerabile
     \item Per \textbf{IoC} si intende un Indicator of Compromise, indicatore usato per identificare indirizzi IP o nomi di dominio di C\&C, hash di file, firme di antivirus, o altro, che faccia ricondurre con alta probabilità a una specifica intrusione
 \end{itemize}
@@ -109,7 +117,7 @@ Per questo e altri motivi, come vedremo, nella prima fase di analisi integreremo
 Un altro importante ruolo della Threat Intelligence, maggiormente vicino al progetto realizzato, è quello di analizzare i malware coinvolti negli attacchi noti o forniti da clienti qualora ne chiedessero l'analisi approfondita. Proprio a questo scopo, il proprio lavoro viene nettamente agevolato da strumenti di analisi automatica più estendibili possibile, così da avere fin da subito tutti i dati su cui lavorare.
 
 \section{Contesto d'uso del progetto}
-Una volta vista una panoramica superficiale di questo ambito della sicurezza informatica,
+Una volta vista una panoramica di questo ambito della sicurezza informatica,
 andiamo ad analizzare il contesto in cui si va ad inserire il progetto realizzato.
 
 L'azienda ospitante offre, come suo core business, sistemi di EDR e XDR.

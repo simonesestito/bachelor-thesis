@@ -1,8 +1,8 @@
-\chapter{Futuri sviluppi e integrazioni}
+\chapter{Sviluppi futuri}
 Il progetto qui realizzato rappresenta la base su cui poggerà l'infrastruttura aziendale descritta originariamente nella figura \ref{fig:fsl_general_arch}.
 Verranno quindi sostituite le attuali integrazioni con servizi mockup o di terze parti di test con le reali componenti aziendali, ancora in fase di sviluppo internamente.
 
-\section{Threat intelligence}
+\section{Integrazione con Threat intelligence}
 Il primo punto cruciale con cui si lega a doppio filo è il sistema di Threat Intelligence automatico (di seguito \emph{"T.I."}). Questo, successivamente alla propria ultimazione, si integrerà agli analizzatori statici e dinamici.
 Per meglio specificare, lo statico è già predisposto: sarà sufficiente effettuare l'upload sul bucket S3 designato per avviare il processo. Inoltre, per ricevere i risultati, la T.I. esporrà un endpoint HTTP dove ricevere notifiche riguardanti l'avvio, la terminazione o eventuali errori di un task relativo a un sample caricato.
 Questo sistema di notifiche segue il paradigma dei webhook, ossia un sistema di callback implementato a livello di richieste HTTP. In questo modo, già predisposto, il richiedente non dovrà attendere anche svariati minuti con la connessione TCP aperta finché il server non abbia terminato la propria elaborazione, con il rischio di perdere tutto in caso di interruzioni di rete. Al contrario, gestirà l'avanzamento tramite endpoint dedicati, senza dover allocare risorse durante l'esecuzione.
