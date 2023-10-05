@@ -953,7 +953,7 @@ manually. See the documentation or just the frontispiece.}
   \newcommand{\SAP@websiteLabel}{Sito web}
   \newcommand{\SAP@AcknowledgmentsLabel}{Ringraziamenti}
   \newcommand{\SAP@AbstractLabel}{Sommario}
-  \newcommand{\SAP@allRightsReservedLabel}{Quest'opera è distribuita con Licenza \href{http://creativecommons.org/licenses/by-nc-sa/4.0/}{Creative Commons BY-NC-SA 4.0 Internazionale}.}
+  \newcommand{\SAP@allRightsReservedLabel}{Quest'opera è distribuita con Licenza \href{https://creativecommons.org/licenses/by-sa/4.0/}{CC BY-SA 4.0}.}
   \newcommand{\SAP@sapthesisInformationLabel}{Questa relazione di tirocinio \`e stata composta con \LaTeX\ e la classe Sapthesis}
   \newcommand{\SAP@emailLabel}{Email dell'autore}}
 
