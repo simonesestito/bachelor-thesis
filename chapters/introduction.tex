@@ -132,7 +132,7 @@ Lo scopo principale è la costruzione di un sistema proprietario per l'analisi a
 
 Un aspetto importante mantenuto chiaro per tutto il corso del progetto è proprio la flessibilità che deve essere garantita a questo nuovo strumento di essere esteso e maggiormente integrato nel corso della propria esistenza. Com'è intuibile infatti, il sistema qui creato verrà successivamente usato come base per la propria architettura di analisi malware automatizzata, che si andrà ad interfacciare con i vari prodotti.
 
-\subsection{Interfacciamento con gli altri servizi}
+\section{Architettura generale}
 \label{chap:intro_interface_with_other_services}
 
 Il progetto si andrà ad integrare nella nuova architettura di sistema proprietaria dell'azienda ospitante.
@@ -148,7 +148,7 @@ Attualmente viene interrogata l'API di VirusTotal Enterprise per ottenere il mag
 
 In caso negativo, verrà invocato il progetto qui realizzato. Quindi, l'Agent invierà il file (non più l'hash) al COS, che lo inoltrerà alla nostra Sandbox, che si compone di una parte di analisi statica e di una dinamica (fig. \ref{fig:fsl_general_arch_sandbox_invoke}). Come vedremo, la fase di analisi statica avrà come trigger l'upload di un file su uno specifico bucket S3.
 
-\section{Architettura generale della Sandbox}
+\bigskip
 
 Il sistema di analisi qui realizzato, chiamato per brevità anche \emph{Sandbox},
 si compone di due parti, indipendenti l'una dall'altra al fine di mantenere una massima modularità.
