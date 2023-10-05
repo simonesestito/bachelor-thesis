@@ -128,9 +128,10 @@ La capacità di eseguire detection di alta qualità è uno dei tratti distintivi
 Proprio in questo punto cruciale, viene l'esigenza dietro il progetto realizzato.
 
 \subsection{Il problema da risolvere}
-Lo scopo principale è la costruzione di un sistema proprietario per l'analisi automatizzata di malware, eliminando le ultime dipendenze con servizi terzi quali VirusTotal, sia per un fattore economico che di flessibilità nei propri prodotti.
+Lo scopo principale è la costruzione di un sistema proprietario per l'analisi automatizzata di malware, eliminando le ultime dipendenze con servizi terzi quali VirusTotal, sia per un fattore economico che di estensibilità. Infatti inserire un nuovo tool all'interno di VirusTotal è pressoché impossibile per un utente, mentre è ragionevole disponendo di una soluzione in-house, come quella qui realizzata.
 
-Un aspetto importante mantenuto chiaro per tutto il corso del progetto è proprio la flessibilità che deve essere garantita a questo nuovo strumento di essere esteso e maggiormente integrato nel corso della propria esistenza. Com'è intuibile infatti, il sistema qui creato verrà successivamente usato come base per la propria architettura di analisi malware automatizzata, che si andrà ad interfacciare con i vari prodotti.
+Il requisito della modularità ha inoltre condizionato la progettazione, richiedendo anche lo sviluppo di un'interfaccia astratta comune per integrare futuri componenti.
+Infine devono essere fornite le API per l'integrazione con servizi che ad oggi ancora non esistono o sono in uno stato embrionale, come la Threat Intelligence automatizzata.
 
 \section{Architettura generale}
 \label{chap:intro_interface_with_other_services}
