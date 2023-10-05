@@ -87,10 +87,10 @@ Si compone delle seguenti fasi \cite{cyber_kill_chain_360}, portando un esempio 
     \item \textbf{Azioni sugli obiettivi}: eseguiamo le azioni più disparate, in base a ciò che vogliamo fare noi come attaccanti, come leggere un file contenenti informazioni sensibili o eseguire il dump del database
 \end{enumerate}
 
-\section{Tipi di sistemi di protezione}
+\section{Sistemi di protezione}
 Ora che abbiamo visto tutte queste minacce, viene spontaneo chiedersi come sia possibile proteggersi.
 
-Il tipo più basilare di software per la protezione è l'\textbf{antivirus}. Questa tipologia di strumenti di protezione si va a concentrare sui singoli computer endpoint, e sfrutta modelli euristici per la rilevazione di vari tipi noti di malware, analizzando \emph{file su disco}.
+L'\textbf{antivirus} e' lo strumento base per la protezione dei singoli computer. Gli antivirus tipicamente ricercano i malware noti (utilizzando database di firme) analizzando i file memorizzati su disco. Il limite dell'approccio basato su firme (o signature dei malware) è quello di scovare solamente i malware noti. 
 
 Ben più potente è l'EDR, acronimo di \textbf{Endpoint Detection and Response}, che sfrutta l'\emph{analisi comportamentale} per rilevare e contrastare anche minacce sconosciute, basandosi sui loro comportamenti. Ad esempio, se vediamo che, dopo aver aperto un file scaricato da Internet, il processo del programma che ne permette la visualizzazione inizia a fare operazioni fuori dal normale funzionamento, come aprire una shell o modificare file o registri di sistema, sicuramente andrà terminato e riportato come incidente, che poi andrà gestito da chi di competenza.
 La sostanziale differenza è il passaggio da semplice analisi su disco a una profonda analisi comportamentale, sfruttando strumenti forniti dal sistema operativo come Microsoft ETW \emph{(Event Tracing for Windows)} o eseguire l'hooking delle syscall manualmente - tecnica ben più complessa ed error-prone.
@@ -128,7 +128,7 @@ La capacità di eseguire detection di alta qualità è uno dei tratti distintivi
 Proprio in questo punto cruciale, viene l'esigenza dietro il progetto realizzato.
 
 \subsection{Il problema da risolvere}
-Lo scopo principale è la costruzione di un proprio sistema interno di analisi di malware automatizzata, eliminando le ultime dipendenze con servizi terzi quali VirusTotal, sia per un fattore economico che di flessibilità nei propri prodotti.
+Lo scopo principale è la costruzione di un sistema proprietario per l'analisi automatizzata di malware, eliminando le ultime dipendenze con servizi terzi quali VirusTotal, sia per un fattore economico che di flessibilità nei propri prodotti.
 
 Un aspetto importante mantenuto chiaro per tutto il corso del progetto è proprio la flessibilità che deve essere garantita a questo nuovo strumento di essere esteso e maggiormente integrato nel corso della propria esistenza. Com'è intuibile infatti, il sistema qui creato verrà successivamente usato come base per la propria architettura di analisi malware automatizzata, che si andrà ad interfacciare con i vari prodotti.
 
