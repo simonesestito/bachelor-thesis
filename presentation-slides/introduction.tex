@@ -1,17 +1,36 @@
-\section{Introduzione}
+\begin{frame}{}
+Il progetto si divide in:
+\vfill
+\note{Il progetto che è stato realizzato in questo tirocinio si compone di due parti, tra loro attualmente indipendenti ma integrabili successivamente. Ossia:}
 
-\begin{frame}{Cos'è}
-Si è realizzato un sistema di analisi automatica di malware.
-
-Va a compiere valutazioni statiche sull'eseguibile o dinamiche sul comportamento in una sandbox, estraendo dati importanti da restituire come risultato.
-
-Inizialmente usato dall'analista, verrà in futuro integrato nella piattaforma aziendale di Threat Intelligence, al fianco di VirusTotal.
-\end{frame}
-
-\begin{frame}{Divisione}
-Il progetto si divide in due macro-aree:
+\begin{columns}
+\begin{column}{0.48\linewidth}
 \begin{itemize}
-    \item Analisi \textbf{statica}, dove sono stati creati e distribuiti tool appositi
-    \item Analisi \textbf{dinamica}, dove è stata realizzata l'infrastruttura basandosi su una sandbox
+    \vfill
+    \item Analisi \textbf{statica}
+    \begin{itemize}
+        \item Varie tipologie di analisi
+        \item Parsing e aggregazione
+        \item Deploy in cloud su AWS
+    \end{itemize}
+    \note{
+    Uno strumento in cloud di analisi statica; che sfrutta vari tool, molto diversi tra loro, in maniera aggregata per ottenere un unico risultato finale;
+    }
+    \Pause
 \end{itemize}
+\end{column}
+
+\begin{column}{0.48\linewidth}
+\begin{itemize}
+    \vfill
+    \item Analisi \textbf{dinamica}
+    \begin{itemize}
+        \item Sandbox
+        \item Hardening
+        \item Sviluppo di plugin custom
+    \end{itemize}
+    \note{E poi una seconda sezione dedicata all'analisi dinamica, quindi la realizzazione, configurazione ed estensione di una sandbox al fine di fare behavioural analysis}
+\end{itemize}
+\end{column}
+\end{columns}
 \end{frame}

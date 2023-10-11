@@ -1,8 +1,15 @@
 \documentclass{beamer}
 \usepackage{amsfonts,amsmath,oldgerm}
+\usepackage{minted}
+% \usepackage{minipage}
 \usetheme{sintef}
 
+\usepackage{pgfpages}
+%\setbeamertemplate{note page}[plain]
+\setbeameroption{show notes on second screen=right}
+
 \newcommand{\testcolor}[1]{\colorbox{#1}{\textcolor{#1}{test}}~\texttt{#1}}
+\newcommand{\Pause}{\pause\note{\\.\hrulefill{}.\\}}
 
 \usefonttheme[onlymath]{serif}
 
