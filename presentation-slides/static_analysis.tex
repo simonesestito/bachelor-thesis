@@ -2,7 +2,6 @@
 \note{Quindi iniziamo con la parte \textbf{statica}}
 
 \begin{frame}{Estrazione delle capabilities}
-Dato un file eseguibile, andiamo a estrarre le \emph{capabilities} con \textbf{capa}.\\
 Usiamo \emph{capa}, strumento open source realizzato da Mandiant.
 
 \note{Dato un file eseguibile, prima di tutto, siamo interessati alle sue capabilities.
@@ -214,9 +213,8 @@ Viene realizzata anche una pipeline CI/CD per GitLab Runner.
 \vfill
 \note{Così, se si modifica una regola o esegue una modifica, al push del commit Git viene eseguito: 
 \textbf{GLI STEP}}
-\begin{itemize}
-    \item \textbf{build} dell'immagine Docker, usando \emph{multi-stage build} per ridurne la dimensione da 2GB a $\approx$ 200MB
-    \item \textbf{test} usando dei file innocui creati per varie architetture, sistemi operativi e casistiche (tradizionali, packed, installer, ...)
-    \item \textbf{deploy} dell'immagine su AWS ECR e sulla Lambda in caso di test positivi
-\end{itemize}
+\begin{figure}
+    \centering
+    \includegraphics[width=0.9\textwidth]{images/gitlab_pipeline_scheme.drawio.png}
+\end{figure}
 \end{frame}
