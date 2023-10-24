@@ -195,6 +195,14 @@
 	\renewcommand{\@TitleBackground}{#1}%
 }
 
+\newcommand{\businesslogo}{
+    \begin{tikzpicture}[remember picture, overlay]
+      \node [inner sep=0pt, anchor=south west] at ([xshift=0.5cm, yshift=0.5cm] current page.south west) {
+        \includegraphics[width=28mm]{images/gyala.jpeg} % Adjust the width and height to fit the margin
+      };
+    \end{tikzpicture}
+}
+
 % Overwrite the maketitle command for the title page
 \renewcommand{\maketitle}{
 \begingroup
@@ -209,6 +217,7 @@
   }
   \begin{frame}[plain,noframenumbering]%
   \titlepage%
+  \businesslogo
   \end{frame}%
 \endgroup
 }
