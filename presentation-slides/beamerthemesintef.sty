@@ -290,10 +290,11 @@
     \begin{minipage}{\textwidth}
       \usebeamercolor[fg]{normal text}
       \centering
-      \vspace{0.6cm}
+      \vspace{0.8cm}
       \ifstrequal{#1}{notitle}{}{
-        \Huge \inserttitle
-        \vspace{5mm}
+        \begin{spacing}{0.8}
+            \Huge \inserttitle
+        \end{spacing}
       }
       \Large \textsl{\\Grazie per l'attenzione! \\ Domande?}
     \end{minipage}
