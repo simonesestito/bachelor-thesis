@@ -290,12 +290,20 @@
     \begin{minipage}{\textwidth}
       \usebeamercolor[fg]{normal text}
       \centering
+      \vspace{0.6cm}
       \ifstrequal{#1}{notitle}{}{
         \Huge \inserttitle
         \vspace{5mm}
       }
       \Large \textsl{\\Grazie per l'attenzione! \\ Domande?}
     \end{minipage}
+
+    \begin{tikzpicture}[remember picture, overlay]
+      \node [inner sep=0pt, anchor=north east] at ([xshift=-0.6cm, yshift=-0.6cm] current page.north east) {
+        \includegraphics[width=0.16\textwidth]{images/qr-code.png} % Adjust the width and height to fit the margin
+      };
+    \end{tikzpicture}
+
   \end{frame}
 \endgroup
 }
